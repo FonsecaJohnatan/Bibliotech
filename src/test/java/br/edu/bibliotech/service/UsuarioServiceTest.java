@@ -36,7 +36,7 @@ class UsuarioServiceTest {
 
     @Test
     void deveCadastrarUsuarioValido() {
-        Usuario novo = usuario("Maria", "MARIA@EMAIL.COM");
+        Usuario novo = new Usuario("Maria", "MARIA@EMAIL.COM", "senhaEmTextoPuro", Perfil.LEITOR);
         when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
         Usuario salvo = usuarioService.cadastrar(novo);
@@ -51,7 +51,7 @@ class UsuarioServiceTest {
     @NullAndEmptySource
     @ValueSource(strings = {" ", "   "})
     void naoDeveCadastrarNomeVazio(String nome) {
-        Usuario novo = usuario(nome, "maria@email.com");
+        Usuario novo = new Usuario(nome, "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
 
         assertThatThrownBy(() -> usuarioService.cadastrar(novo)).isInstanceOf(RuntimeException.class);
 
@@ -62,7 +62,7 @@ class UsuarioServiceTest {
     @NullAndEmptySource
     @ValueSource(strings = {" ", "sem-arroba", "@email.com", "maria@"})
     void naoDeveCadastrarEmailInvalido(String email) {
-        Usuario novo = usuario("Maria", email);
+        Usuario novo = new Usuario("Maria", email, "senhaEmTextoPuro", Perfil.LEITOR);
 
         assertThatThrownBy(() -> usuarioService.cadastrar(novo)).isInstanceOf(RuntimeException.class);
 
@@ -71,10 +71,11 @@ class UsuarioServiceTest {
 
     @Test
     void naoDeveCadastrarEmailDuplicado() {
-        Usuario existente = usuario("Maria", "maria@email.com");
+        Usuario existente = new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
         when(usuarioRepository.findByEmail("maria@email.com")).thenReturn(Optional.of(existente));
 
-        assertThatThrownBy(() -> usuarioService.cadastrar(usuario("Outra", "MARIA@EMAIL.COM")))
+        assertThatThrownBy(() -> usuarioService.cadastrar(
+                new Usuario("Outra", "MARIA@EMAIL.COM", "senhaEmTextoPuro", Perfil.LEITOR)))
                 .isInstanceOf(RuntimeException.class);
 
         verify(usuarioRepository, never()).save(any(Usuario.class));
@@ -83,7 +84,7 @@ class UsuarioServiceTest {
     @ParameterizedTest
     @EnumSource(Perfil.class)
     void deveAceitarPerfisValidos(Perfil perfil) {
-        Usuario novo = usuario("Maria", "maria@email.com");
+        Usuario novo = new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
         novo.setPerfil(perfil);
         when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
@@ -92,7 +93,7 @@ class UsuarioServiceTest {
 
     @Test
     void naoDeveCadastrarSemPerfil() {
-        Usuario novo = usuario("Maria", "maria@email.com");
+        Usuario novo = new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
         novo.setPerfil(null);
 
         assertThatThrownBy(() -> usuarioService.cadastrar(novo)).isInstanceOf(RuntimeException.class);
@@ -102,24 +103,24 @@ class UsuarioServiceTest {
 
     @Test
     void deveBuscarUsuarioPorId() {
-        Usuario existente = usuario("Maria", "maria@email.com");
-        existente.setId(1L);
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
+        Usuario existente = new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
+        existente.setId(10L);
+        when(usuarioRepository.findById(10L)).thenReturn(Optional.of(existente));
 
-        assertThat(usuarioService.buscarPorId(1L)).isSameAs(existente);
+        assertThat(usuarioService.buscarPorId(10L)).isSameAs(existente);
     }
 
     @Test
     void naoDeveBuscarUsuarioInexistente() {
-        when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
+        when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> usuarioService.buscarPorId(99L)).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> usuarioService.buscarPorId(999L)).isInstanceOf(RuntimeException.class);
     }
 
     @Test
     void deveListarUsuarios() {
-        Usuario primeiro = usuario("Maria", "maria@email.com");
-        Usuario segundo = usuario("João", "joao@email.com");
+        Usuario primeiro = new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
+        Usuario segundo = new Usuario("João", "joao@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
         when(usuarioRepository.findAll()).thenReturn(List.of(primeiro, segundo));
 
         assertThat(usuarioService.listar()).containsExactly(primeiro, segundo);
@@ -127,14 +128,15 @@ class UsuarioServiceTest {
 
     @Test
     void deveAtualizarUsuario() {
-        Usuario existente = usuario("Maria", "maria@email.com");
-        existente.setId(1L);
+        Usuario existente = new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
+        existente.setId(10L);
         String senhaAnterior = existente.getSenha();
-        Usuario novosDados = usuario("Maria Silva", "MARIA.SILVA@EMAIL.COM");
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
+        Usuario novosDados = new Usuario("Maria Silva", "MARIA.SILVA@EMAIL.COM",
+                "senhaEmTextoPuro", Perfil.LEITOR);
+        when(usuarioRepository.findById(10L)).thenReturn(Optional.of(existente));
         when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
-        Usuario atualizado = usuarioService.atualizar(1L, novosDados);
+        Usuario atualizado = usuarioService.atualizar(10L, novosDados);
 
         assertThat(atualizado.getNome()).isEqualTo("Maria Silva");
         assertThat(atualizado.getEmail()).isEqualTo("maria.silva@email.com");
@@ -144,14 +146,15 @@ class UsuarioServiceTest {
 
     @Test
     void naoDeveAtualizarComEmailDeOutroUsuario() {
-        Usuario existente = usuario("Maria", "maria@email.com");
-        existente.setId(1L);
-        Usuario outro = usuario("João", "joao@email.com");
-        outro.setId(2L);
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
+        Usuario existente = new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
+        existente.setId(10L);
+        Usuario outro = new Usuario("João", "joao@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
+        outro.setId(20L);
+        when(usuarioRepository.findById(10L)).thenReturn(Optional.of(existente));
         when(usuarioRepository.findByEmail("joao@email.com")).thenReturn(Optional.of(outro));
 
-        assertThatThrownBy(() -> usuarioService.atualizar(1L, usuario("Maria", "JOAO@EMAIL.COM")))
+        assertThatThrownBy(() -> usuarioService.atualizar(10L,
+                new Usuario("Maria", "JOAO@EMAIL.COM", "senhaEmTextoPuro", Perfil.LEITOR)))
                 .isInstanceOf(RuntimeException.class);
 
         verify(usuarioRepository, never()).save(any(Usuario.class));
@@ -160,9 +163,10 @@ class UsuarioServiceTest {
 
     @Test
     void naoDeveAtualizarUsuarioInexistente() {
-        when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
+        when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> usuarioService.atualizar(99L, usuario("Maria", "maria@email.com")))
+        assertThatThrownBy(() -> usuarioService.atualizar(999L,
+                new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR)))
                 .isInstanceOf(RuntimeException.class);
 
         verify(usuarioRepository, never()).save(any(Usuario.class));
@@ -170,11 +174,12 @@ class UsuarioServiceTest {
 
     @Test
     void naoDeveAtualizarComNomeVazio() {
-        Usuario existente = usuario("Maria", "maria@email.com");
-        existente.setId(1L);
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
+        Usuario existente = new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
+        existente.setId(10L);
+        when(usuarioRepository.findById(10L)).thenReturn(Optional.of(existente));
 
-        assertThatThrownBy(() -> usuarioService.atualizar(1L, usuario("  ", "novo@email.com")))
+        assertThatThrownBy(() -> usuarioService.atualizar(10L,
+                new Usuario("  ", "novo@email.com", "senhaEmTextoPuro", Perfil.LEITOR)))
                 .isInstanceOf(RuntimeException.class);
 
         verify(usuarioRepository, never()).save(any(Usuario.class));
@@ -183,11 +188,12 @@ class UsuarioServiceTest {
 
     @Test
     void naoDeveAtualizarComEmailInvalido() {
-        Usuario existente = usuario("Maria", "maria@email.com");
-        existente.setId(1L);
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
+        Usuario existente = new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
+        existente.setId(10L);
+        when(usuarioRepository.findById(10L)).thenReturn(Optional.of(existente));
 
-        assertThatThrownBy(() -> usuarioService.atualizar(1L, usuario("Novo nome", "email-invalido")))
+        assertThatThrownBy(() -> usuarioService.atualizar(10L,
+                new Usuario("Novo nome", "email-invalido", "senhaEmTextoPuro", Perfil.LEITOR)))
                 .isInstanceOf(RuntimeException.class);
 
         verify(usuarioRepository, never()).save(any(Usuario.class));
@@ -197,13 +203,13 @@ class UsuarioServiceTest {
 
     @Test
     void deveDesativarUsuario() {
-        Usuario existente = usuario("Maria", "maria@email.com");
-        existente.setId(1L);
+        Usuario existente = new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
+        existente.setId(10L);
         Emprestimo emprestimo = new Emprestimo();
         existente.getEmprestimos().add(emprestimo);
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(usuarioRepository.findById(10L)).thenReturn(Optional.of(existente));
 
-        usuarioService.desativar(1L);
+        usuarioService.desativar(10L);
 
         assertThat(existente.getAtivo()).isFalse();
         assertThat(existente.getEmprestimos()).containsExactly(emprestimo);
@@ -212,16 +218,16 @@ class UsuarioServiceTest {
 
     @Test
     void naoDeveDesativarUsuarioInexistente() {
-        when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
+        when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> usuarioService.desativar(99L)).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> usuarioService.desativar(999L)).isInstanceOf(RuntimeException.class);
 
         verify(usuarioRepository, never()).delete(any(Usuario.class));
     }
 
     @Test
     void deveProtegerSenha() {
-        Usuario novo = usuario("Maria", "maria@email.com");
+        Usuario novo = new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
         when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
         Usuario salvo = usuarioService.cadastrar(novo);
@@ -233,13 +239,13 @@ class UsuarioServiceTest {
     @Test
     void deveAlterarSenhaComSenhaAtualCorreta() {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        Usuario existente = usuario("Maria", "maria@email.com");
-        existente.setId(1L);
+        Usuario existente = new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
+        existente.setId(10L);
         existente.setSenha(encoder.encode("senhaAntiga"));
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(usuarioRepository.findById(10L)).thenReturn(Optional.of(existente));
         when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
-        Usuario atualizado = usuarioService.alterarSenha(1L, "senhaAntiga", "senhaNova");
+        Usuario atualizado = usuarioService.alterarSenha(10L, "senhaAntiga", "senhaNova");
 
         assertThat(encoder.matches("senhaNova", atualizado.getSenha())).isTrue();
         assertThat(encoder.matches("senhaAntiga", atualizado.getSenha())).isFalse();
@@ -251,13 +257,13 @@ class UsuarioServiceTest {
     @Test
     void naoDeveAlterarSenhaComSenhaAtualIncorreta() {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        Usuario existente = usuario("Maria", "maria@email.com");
-        existente.setId(1L);
+        Usuario existente = new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
+        existente.setId(10L);
         String hashOriginal = encoder.encode("senhaAntiga");
         existente.setSenha(hashOriginal);
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(usuarioRepository.findById(10L)).thenReturn(Optional.of(existente));
 
-        assertThatThrownBy(() -> usuarioService.alterarSenha(1L, "senhaErrada", "senhaNova"))
+        assertThatThrownBy(() -> usuarioService.alterarSenha(10L, "senhaErrada", "senhaNova"))
                 .isInstanceOf(IllegalArgumentException.class);
 
         assertThat(existente.getSenha()).isEqualTo(hashOriginal);
@@ -269,13 +275,13 @@ class UsuarioServiceTest {
     @ValueSource(strings = {"   "})
     void naoDeveAlterarParaSenhaVazia(String novaSenha) {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        Usuario existente = usuario("Maria", "maria@email.com");
-        existente.setId(1L);
+        Usuario existente = new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
+        existente.setId(10L);
         String hashOriginal = encoder.encode("senhaAntiga");
         existente.setSenha(hashOriginal);
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(usuarioRepository.findById(10L)).thenReturn(Optional.of(existente));
 
-        assertThatThrownBy(() -> usuarioService.alterarSenha(1L, "senhaAntiga", novaSenha))
+        assertThatThrownBy(() -> usuarioService.alterarSenha(10L, "senhaAntiga", novaSenha))
                 .isInstanceOf(IllegalArgumentException.class);
 
         assertThat(existente.getSenha()).isEqualTo(hashOriginal);
@@ -284,15 +290,11 @@ class UsuarioServiceTest {
 
     @Test
     void naoDeveAlterarSenhaDeUsuarioInexistente() {
-        when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
+        when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> usuarioService.alterarSenha(99L, "senhaAntiga", "senhaNova"))
+        assertThatThrownBy(() -> usuarioService.alterarSenha(999L, "senhaAntiga", "senhaNova"))
                 .isInstanceOf(RuntimeException.class);
 
         verify(usuarioRepository, never()).save(any(Usuario.class));
-    }
-
-    private Usuario usuario(String nome, String email) {
-        return new Usuario(nome, email, "senhaEmTextoPuro", Perfil.LEITOR);
     }
 }

@@ -34,7 +34,7 @@ class AutorServiceTest {
 
     @Test
     void deveCadastrarAutorValido() {
-        Autor novo = autor("Machado de Assis", "Brasileira", LocalDate.of(1839, 6, 21));
+        Autor novo = new Autor("Machado de Assis", "Brasileira", LocalDate.of(1839, 6, 21));
         when(autorRepository.save(any(Autor.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
         Autor salvo = autorService.cadastrar(novo);
@@ -47,7 +47,7 @@ class AutorServiceTest {
 
     @Test
     void deveCadastrarSemDadosOpcionais() {
-        Autor novo = autor("Machado de Assis", null, null);
+        Autor novo = new Autor("Machado de Assis", null, null);
         when(autorRepository.save(any(Autor.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
         Autor salvo = autorService.cadastrar(novo);
@@ -60,7 +60,7 @@ class AutorServiceTest {
     @NullAndEmptySource
     @ValueSource(strings = {" ", "   "})
     void naoDeveCadastrarNomeVazio(String nome) {
-        Autor novo = autor(nome, "Brasileira", null);
+        Autor novo = new Autor(nome, "Brasileira", null);
 
         assertThatThrownBy(() -> autorService.cadastrar(novo)).isInstanceOf(RuntimeException.class);
 
@@ -69,7 +69,7 @@ class AutorServiceTest {
 
     @Test
     void naoDeveCadastrarNomeAcimaDoLimite() {
-        Autor novo = autor("A".repeat(121), "Brasileira", null);
+        Autor novo = new Autor("A".repeat(121), "Brasileira", null);
 
         assertThatThrownBy(() -> autorService.cadastrar(novo)).isInstanceOf(RuntimeException.class);
 
@@ -78,7 +78,7 @@ class AutorServiceTest {
 
     @Test
     void naoDeveCadastrarNacionalidadeAcimaDoLimite() {
-        Autor novo = autor("Machado de Assis", "B".repeat(61), null);
+        Autor novo = new Autor("Machado de Assis", "B".repeat(61), null);
 
         assertThatThrownBy(() -> autorService.cadastrar(novo)).isInstanceOf(RuntimeException.class);
 
@@ -87,24 +87,24 @@ class AutorServiceTest {
 
     @Test
     void deveBuscarAutorPorId() {
-        Autor existente = autor("Machado de Assis", "Brasileira", null);
-        existente.setId(1L);
-        when(autorRepository.findById(1L)).thenReturn(Optional.of(existente));
+        Autor existente = new Autor("Machado de Assis", "Brasileira", null);
+        existente.setId(10L);
+        when(autorRepository.findById(10L)).thenReturn(Optional.of(existente));
 
-        assertThat(autorService.buscarPorId(1L)).isSameAs(existente);
+        assertThat(autorService.buscarPorId(10L)).isSameAs(existente);
     }
 
     @Test
     void naoDeveBuscarAutorInexistente() {
-        when(autorRepository.findById(99L)).thenReturn(Optional.empty());
+        when(autorRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> autorService.buscarPorId(99L)).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> autorService.buscarPorId(999L)).isInstanceOf(RuntimeException.class);
     }
 
     @Test
     void deveListarAutores() {
-        Autor primeiro = autor("Machado de Assis", "Brasileira", null);
-        Autor segundo = autor("Clarice Lispector", "Brasileira", null);
+        Autor primeiro = new Autor("Machado de Assis", "Brasileira", null);
+        Autor segundo = new Autor("Clarice Lispector", "Brasileira", null);
         when(autorRepository.findAll()).thenReturn(List.of(primeiro, segundo));
 
         assertThat(autorService.listar()).containsExactly(primeiro, segundo);
@@ -112,18 +112,18 @@ class AutorServiceTest {
 
     @Test
     void deveAtualizarAutorSemAlterarLivros() {
-        Autor existente = autor("Machado de Assis", "Brasileira", null);
-        existente.setId(1L);
+        Autor existente = new Autor("Machado de Assis", "Brasileira", null);
+        existente.setId(10L);
         Livro livro = new Livro();
         existente.getLivros().add(livro);
         LocalDate novaData = LocalDate.of(1839, 6, 21);
-        Autor novosDados = autor("Joaquim Maria Machado de Assis", "Brasil", novaData);
-        when(autorRepository.findById(1L)).thenReturn(Optional.of(existente));
+        Autor novosDados = new Autor("Joaquim Maria Machado de Assis", "Brasil", novaData);
+        when(autorRepository.findById(10L)).thenReturn(Optional.of(existente));
         when(autorRepository.save(any(Autor.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
-        Autor atualizado = autorService.atualizar(1L, novosDados);
+        Autor atualizado = autorService.atualizar(10L, novosDados);
 
-        assertThat(atualizado.getId()).isEqualTo(1L);
+        assertThat(atualizado.getId()).isEqualTo(10L);
         assertThat(atualizado.getNome()).isEqualTo("Joaquim Maria Machado de Assis");
         assertThat(atualizado.getNacionalidade()).isEqualTo("Brasil");
         assertThat(atualizado.getDataNascimento()).isEqualTo(novaData);
@@ -132,9 +132,9 @@ class AutorServiceTest {
 
     @Test
     void naoDeveAtualizarAutorInexistente() {
-        when(autorRepository.findById(99L)).thenReturn(Optional.empty());
+        when(autorRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> autorService.atualizar(99L, autor("Nome", null, null)))
+        assertThatThrownBy(() -> autorService.atualizar(999L, new Autor("Nome", null, null)))
                 .isInstanceOf(RuntimeException.class);
 
         verify(autorRepository, never()).save(any(Autor.class));
@@ -142,11 +142,11 @@ class AutorServiceTest {
 
     @Test
     void naoDeveAtualizarComNomeVazio() {
-        Autor existente = autor("Machado de Assis", "Brasileira", null);
-        existente.setId(1L);
-        when(autorRepository.findById(1L)).thenReturn(Optional.of(existente));
+        Autor existente = new Autor("Machado de Assis", "Brasileira", null);
+        existente.setId(10L);
+        when(autorRepository.findById(10L)).thenReturn(Optional.of(existente));
 
-        assertThatThrownBy(() -> autorService.atualizar(1L, autor("  ", "Brasil", null)))
+        assertThatThrownBy(() -> autorService.atualizar(10L, new Autor("  ", "Brasil", null)))
                 .isInstanceOf(RuntimeException.class);
 
         verify(autorRepository, never()).save(any(Autor.class));
@@ -155,25 +155,21 @@ class AutorServiceTest {
 
     @Test
     void deveExcluirAutorExistente() {
-        Autor existente = autor("Machado de Assis", "Brasileira", null);
-        existente.setId(1L);
-        when(autorRepository.findById(1L)).thenReturn(Optional.of(existente));
+        Autor existente = new Autor("Machado de Assis", "Brasileira", null);
+        existente.setId(10L);
+        when(autorRepository.findById(10L)).thenReturn(Optional.of(existente));
 
-        autorService.excluir(1L);
+        autorService.excluir(10L);
 
         verify(autorRepository).delete(existente);
     }
 
     @Test
     void naoDeveExcluirAutorInexistente() {
-        when(autorRepository.findById(99L)).thenReturn(Optional.empty());
+        when(autorRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> autorService.excluir(99L)).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> autorService.excluir(999L)).isInstanceOf(RuntimeException.class);
 
         verify(autorRepository, never()).delete(any(Autor.class));
-    }
-
-    private Autor autor(String nome, String nacionalidade, LocalDate dataNascimento) {
-        return new Autor(nome, nacionalidade, dataNascimento);
     }
 }
