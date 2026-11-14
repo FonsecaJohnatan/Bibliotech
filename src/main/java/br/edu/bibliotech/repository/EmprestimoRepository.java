@@ -8,6 +8,8 @@ import java.util.List;
 
 public interface EmprestimoRepository extends JpaRepository<Emprestimo, Long> {
 
+    boolean existsByExemplarId(Long exemplarId);
+
     List<Emprestimo> findByUsuarioId(Long usuarioId);
 
     long countByUsuarioIdAndDataDevolucaoIsNull(Long usuarioId);
