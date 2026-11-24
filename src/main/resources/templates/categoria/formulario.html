@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{base :: head('Cadastro de categoria')}"></head>
+<body>
+	<header th:replace="~{base :: header}"></header>
+	<main class="formulario">
+		<a th:href="@{/categoria}">Voltar para categorias</a>
+		<h1 th:text="${id != null ? 'Editar categoria' : 'Nova categoria'}">Cadastro</h1>
+		<p>O nome é obrigatório. Os demais campos são opcionais.</p>
+		<form th:object="${requisicaoNovaCategoria}" th:action="${id != null} ? @{/categoria/{id}(id=${id})} : @{/categoria/novo}" method="post">
+			<div class="erro" role="alert" th:if="${#fields.hasGlobalErrors()}">
+				<p th:each="erro : ${#fields.globalErrors()}" th:text="${erro}"></p>
+			</div>
+			<div class="campo">
+				<label for="nome">Nome</label>
+				<input id="nome" type="text" th:field="*{nome}" maxlength="80" required th:errorclass="invalido" aria-describedby="nome-erro">
+				<small id="nome-erro" class="erro-campo" th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}"></small>
+			</div>
+			<div class="campo">
+				<label for="descricao">Descrição</label>
+				<textarea id="descricao" th:field="*{descricao}" maxlength="255" rows="4" th:errorclass="invalido" aria-describedby="descricao-erro"></textarea>
+				<small id="descricao-erro" class="erro-campo" th:if="${#fields.hasErrors('descricao')}" th:errors="*{descricao}"></small>
+			</div>
+			<div class="acoes">
+				<button type="submit">Salvar</button>
+				<a th:href="@{/categoria}">Cancelar</a>
+			</div>
+		</form>
+	</main>
+</body>
+</html>

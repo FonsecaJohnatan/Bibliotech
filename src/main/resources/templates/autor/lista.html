@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{base :: head('Autores')}"></head>
+<body>
+	<header th:replace="~{base :: header}"></header>
+	<main th:fragment="lista">
+		<div class="titulo">
+			<h1>Autores</h1>
+			<a class="botao" th:href="@{/autor/formulario}">Novo autor</a>
+		</div>
+		<p class="sucesso" role="status" th:if="${mensagem}" th:text="${mensagem}"></p>
+		<p class="card" th:if="${#lists.isEmpty(autores)}">Nenhum autor cadastrado. Use o botão acima para começar.</p>
+		<div class="tabela" th:unless="${#lists.isEmpty(autores)}">
+			<table>
+				<caption class="sr-only">Lista de autores</caption>
+				<thead>
+					<tr>
+						<th scope="col">Nome</th>
+						<th scope="col">Nacionalidade</th>
+						<th scope="col">Data de nascimento</th>
+						<th scope="col">Ações</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="autor : ${autores}">
+						<td th:text="${autor.nome}"></td>
+						<td th:text="${autor.nacionalidade}"></td>
+						<td th:text="${autor.dataNascimento != null ? #temporals.format(autor.dataNascimento, 'dd/MM/yyyy') : '—'}"></td>
+						<td><a th:href="@{/autor/{id}/editar(id=${autor.id})}" th:aria-label="'Editar ' + ${autor.nome}">Editar</a></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</main>
+</body>
+</html>
