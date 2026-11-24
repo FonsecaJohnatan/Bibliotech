@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{base :: head('Categorias')}"></head>
+<body>
+	<header th:replace="~{base :: header}"></header>
+	<main th:fragment="lista">
+		<div class="titulo">
+			<h1>Categorias</h1>
+			<a class="botao" th:href="@{/categoria/formulario}">Nova categoria</a>
+		</div>
+		<p class="sucesso" role="status" th:if="${mensagem}" th:text="${mensagem}"></p>
+		<p class="card" th:if="${#lists.isEmpty(categorias)}">Nenhuma categoria cadastrada. Use o botão acima para começar.</p>
+		<div class="tabela" th:unless="${#lists.isEmpty(categorias)}">
+			<table>
+				<caption class="sr-only">Lista de categorias</caption>
+				<thead>
+					<tr>
+						<th scope="col">Nome</th>
+						<th scope="col">Descrição</th>
+						<th scope="col">Ações</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="categoria : ${categorias}">
+						<td th:text="${categoria.nome}"></td>
+						<td th:text="${categoria.descricao}"></td>
+						<td><a th:href="@{/categoria/{id}/editar(id=${categoria.id})}" th:aria-label="'Editar ' + ${categoria.nome}">Editar</a></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</main>
+</body>
+</html>

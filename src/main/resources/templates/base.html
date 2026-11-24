@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(titulo)">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title th:text="${titulo} + ' | BiblioTech'">BiblioTech</title>
+	<link rel="stylesheet" th:href="@{/css/estilo.css}">
+</head>
+<body>
+	<header th:fragment="header">
+		<nav aria-label="Menu principal">
+			<a class="marca" th:href="@{/home}">BiblioTech</a>
+			<a th:href="@{/autor}">Autores</a>
+			<a th:href="@{/categoria}">Categorias</a>
+		</nav>
+	</header>
+</body>
+</html>

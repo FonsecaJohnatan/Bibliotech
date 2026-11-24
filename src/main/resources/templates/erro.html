@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{base :: head('Registro não encontrado')}"></head>
+<body>
+	<header th:replace="~{base :: header}"></header>
+	<main>
+		<h1>Registro não encontrado</h1>
+		<p th:text="${mensagem}">O registro solicitado não foi encontrado.</p>
+		<a class="botao" th:href="@{/home}">Voltar ao início</a>
+	</main>
+</body>
+</html>
