@@ -15,6 +15,8 @@ a { color: #12665d; }
 .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-top: 32px; }
 .card, form, .tabela { background: white; border: 1px solid #d6dfdc; border-radius: 8px; }
 .card, form { padding: 24px; }
+.detalhe-livro { margin-top: 24px; }
+.detalhe-livro h1 { margin-top: 0; }
 .titulo, .acoes { display: flex; align-items: center; gap: 20px; }
 .titulo { justify-content: space-between; margin-bottom: 24px; }
 .botao, button { display: inline-block; background: #17675e; color: white; padding: 10px 18px; border: none; border-radius: 5px; font: inherit; text-decoration: none; cursor: pointer; }
@@ -96,7 +98,6 @@ dialog form { border: 0; padding: 0; }
 body:has(.com-menu) { padding-top: 72px; padding-left: 240px; transition: padding-left 180ms ease; }
 .com-menu .barra-superior { position: fixed; inset: 0 0 auto; height: 72px; background: #143e3b; z-index: 30; }
 .menu-lateral { position: fixed; inset: 72px auto 0 0; width: 240px; background: #143e3b; padding: 24px 16px; overflow-y: auto; z-index: 20; transition: width 180ms ease; overflow-x: hidden; }
-.titulo-menu { margin: 0 12px 16px; color: #b3d2c9; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
 .links-menu { display: flex; flex-direction: column; gap: 6px; }
 .links-menu a { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 12px; border-radius: 6px; white-space: nowrap; }
 .icone-menu { width: 24px; height: 24px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
@@ -104,7 +105,7 @@ body:has(.com-menu) { padding-top: 72px; padding-left: 240px; transition: paddin
 .links-menu a[aria-current="page"] { font-weight: bold; }
 body.menu-recolhido { padding-left: 72px; }
 .menu-recolhido .menu-lateral { width: 72px; padding: 24px 12px; }
-.menu-recolhido .texto-menu, .menu-recolhido .titulo-menu { display: none; }
+.menu-recolhido .texto-menu { display: none; }
 .fundo-menu { display: none; }
 @media (max-width: 800px) {
     body:has(.com-menu) { padding-left: 72px; }

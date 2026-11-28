@@ -5,23 +5,25 @@
     <header th:replace="~{base :: header}"></header>
     <main>
         <a th:href="@{/home}">Voltar ao catálogo</a>
-        <h1 th:replace="~{base :: titulo(${livro.titulo})}">Livro</h1>
-        <p><strong>ISBN:</strong> <span th:text="${livro.isbn}"></span></p>
-        <p><strong>Categoria:</strong> <span th:text="${livro.categoria.nome}"></span></p>
-        <p th:if="${livro.anoPublicacao != null}"><strong>Ano:</strong> <span th:text="${livro.anoPublicacao}"></span></p>
-        <p><strong>Autores:</strong>
-            <span th:if="${#sets.isEmpty(livro.autores)}">Não informado</span>
-            <span th:each="autor, posicao : ${livro.autores}" th:text="${autor.nome} + ${posicao.last ? '' : ', '}"></span>
-        </p>
-        <h2>Disponibilidade</h2>
-        <p th:text="${livro.qtdDisponiveis()} + ' de ' + ${#lists.size(exemplares)} + ' disponíveis'"></p>
-        <p th:if="${#lists.isEmpty(exemplares)}">Nenhum exemplar cadastrado.</p>
-        <ul th:unless="${#lists.isEmpty(exemplares)}">
-            <li th:each="exemplar : ${exemplares}">
-                <span th:text="${exemplar.codigoTombo}"></span> —
-                <span th:text="${#messages.msg('statusExemplar.' + exemplar.status)}"></span>
-            </li>
-        </ul>
+        <article class="card detalhe-livro">
+            <h1 th:replace="~{base :: titulo(${livro.titulo})}">Livro</h1>
+            <p><strong>ISBN:</strong> <span th:text="${livro.isbn}"></span></p>
+            <p><strong>Categoria:</strong> <span th:text="${livro.categoria.nome}"></span></p>
+            <p th:if="${livro.anoPublicacao != null}"><strong>Ano:</strong> <span th:text="${livro.anoPublicacao}"></span></p>
+            <p><strong>Autores:</strong>
+                <span th:if="${#sets.isEmpty(livro.autores)}">Não informado</span>
+                <span th:each="autor, posicao : ${livro.autores}" th:text="${autor.nome} + ${posicao.last ? '' : ', '}"></span>
+            </p>
+            <h2>Disponibilidade</h2>
+            <p th:text="${livro.qtdDisponiveis()} + ' de ' + ${#lists.size(exemplares)} + ' disponíveis'"></p>
+            <p th:if="${#lists.isEmpty(exemplares)}">Nenhum exemplar cadastrado.</p>
+            <ul th:unless="${#lists.isEmpty(exemplares)}">
+                <li th:each="exemplar : ${exemplares}">
+                    <span th:text="${exemplar.codigoTombo}"></span> —
+                    <span th:text="${#messages.msg('statusExemplar.' + exemplar.status)}"></span>
+                </li>
+            </ul>
+        </article>
     </main>
 </body>
 </html>
