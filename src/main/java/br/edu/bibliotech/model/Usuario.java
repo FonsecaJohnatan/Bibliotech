@@ -26,7 +26,6 @@ import java.util.List;
 @NoArgsConstructor
 public class Usuario {
 
-    /** Limite de empréstimos ativos por leitor (RF08). */
     public static final int LIMITE_EMPRESTIMOS_ATIVOS = 3;
 
     @Id
@@ -44,7 +43,6 @@ public class Usuario {
     @Column(nullable = false, unique = true, length = 150)
     private String email;
 
-    /** Hash BCrypt da senha (nunca a senha em texto puro). */
     @NotBlank
     @Column(nullable = false)
     private String senha;
@@ -66,7 +64,6 @@ public class Usuario {
         this.perfil = perfil;
     }
 
-    /** Verifica se o usuário está ativo e abaixo do limite de empréstimos ativos. */
     public boolean podeEmprestar() {
         long ativos = emprestimos.stream()
                 .filter(e -> e.getDataDevolucao() == null)

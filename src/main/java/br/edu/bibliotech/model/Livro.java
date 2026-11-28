@@ -69,7 +69,6 @@ public class Livro {
         this.categoria = categoria;
     }
 
-    /** Quantidade de exemplares com status DISPONIVEL. */
     public int qtdDisponiveis() {
         return (int) exemplares.stream()
                 .filter(e -> e.getStatus() == StatusExemplar.DISPONIVEL)

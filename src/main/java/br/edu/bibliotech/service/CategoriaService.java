@@ -22,9 +22,7 @@ public class CategoriaService {
         String nome = dados.getNome().strip();
         String descricao = dados.getDescricao();
 
-        if (categoriaRepository.existsByNomeIgnoreCase(nome)) {
-            throw new IllegalArgumentException("Nome de categoria já cadastrado");
-        }
+        validarNomeDisponivel(nome);
 
         Categoria categoria = new Categoria(nome, descricao);
 
@@ -49,10 +47,7 @@ public class CategoriaService {
         String descricao = dados.getDescricao();
         String nomeAtual = categoria.getNome();
 
-        if (!nome.equalsIgnoreCase(nomeAtual)
-                && categoriaRepository.existsByNomeIgnoreCase(nome)) {
-            throw new IllegalArgumentException("Nome de categoria já cadastrado");
-        }
+        validarAlteracaoDeNome(nomeAtual, nome);
 
         categoria.setNome(nome);
         categoria.setDescricao(descricao);
@@ -70,14 +65,37 @@ public class CategoriaService {
             throw new IllegalArgumentException("Dados da categoria obrigatórios");
         }
 
-        String nome = dados.getNome();
-        String descricao = dados.getDescricao();
-        
-        if (nome == null || nome.isBlank() || nome.strip().length() > 80) {
+        validarNome(dados.getNome());
+        validarDescricao(dados.getDescricao());
+    }
+
+    private void validarNome(String nome) {
+        boolean nomeInvalido = nome == null || nome.isBlank() || nome.strip().length() > 80;
+
+        if (nomeInvalido) {
             throw new IllegalArgumentException("Nome de categoria inválido");
         }
-        if (descricao != null && descricao.length() > 255) {
+    }
+
+    private void validarDescricao(String descricao) {
+        boolean descricaoLonga = descricao != null && descricao.length() > 255;
+
+        if (descricaoLonga) {
             throw new IllegalArgumentException("Descrição de categoria inválida");
         }
+    }
+
+    private void validarNomeDisponivel(String nome) {
+        if (categoriaRepository.existsByNomeIgnoreCase(nome)) {
+            throw new IllegalArgumentException("Nome de categoria já cadastrado");
+        }
+    }
+
+    private void validarAlteracaoDeNome(String nomeAtual, String novoNome) {
+        if (novoNome.equalsIgnoreCase(nomeAtual)) {
+            return;
+        }
+
+        validarNomeDisponivel(novoNome);
     }
 }

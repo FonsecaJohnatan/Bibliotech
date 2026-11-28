@@ -49,7 +49,7 @@ public class AutorService {
         autor.setNome(nome);
         autor.setNacionalidade(nacionalidade);
         autor.setDataNascimento(dataNascimento);
-        
+
         return autorRepository.save(autor);
     }
 
@@ -63,13 +63,22 @@ public class AutorService {
             throw new IllegalArgumentException("Dados do autor obrigatórios");
         }
 
-        String nome = dados.getNome();
-        String nacionalidade = dados.getNacionalidade();
+        validarNome(dados.getNome());
+        validarNacionalidade(dados.getNacionalidade());
+    }
 
-        if (nome == null || nome.isBlank() || nome.strip().length() > 120) {
+    private void validarNome(String nome) {
+        boolean nomeInvalido = nome == null || nome.isBlank() || nome.strip().length() > 120;
+
+        if (nomeInvalido) {
             throw new IllegalArgumentException("Nome inválido");
         }
-        if (nacionalidade != null && nacionalidade.length() > 60) {
+    }
+
+    private void validarNacionalidade(String nacionalidade) {
+        boolean nacionalidadeLonga = nacionalidade != null && nacionalidade.length() > 60;
+
+        if (nacionalidadeLonga) {
             throw new IllegalArgumentException("Nacionalidade inválida");
         }
     }

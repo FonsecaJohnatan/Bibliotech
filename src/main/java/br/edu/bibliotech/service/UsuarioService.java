@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 @Service
 public class UsuarioService {
 
-    private static final Pattern EMAIL_VALIDO = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE);
+    private final Pattern padraoEmail = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE);
     private final UsuarioRepository usuarioRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -32,11 +32,10 @@ public class UsuarioService {
         String senha = dados.getSenha();
         Perfil perfil = dados.getPerfil();
 
-        if (validarEmail(email, null)) {
-            throw new IllegalArgumentException("E-mail já cadastrado");
-        }
+        validarEmailDisponivel(email, null);
 
-        Usuario usuario = new Usuario(nome, email, passwordEncoder.encode(senha), perfil);
+        String senhaCriptografada = passwordEncoder.encode(senha);
+        Usuario usuario = new Usuario(nome, email, senhaCriptografada, perfil);
 
         return usuarioRepository.save(usuario);
     }
@@ -58,9 +57,7 @@ public class UsuarioService {
         String nome = dados.getNome().strip();
         String email = normalizarEmail(dados.getEmail());
 
-        if (validarEmail(email, id)) {
-            throw new IllegalArgumentException("E-mail já cadastrado");
-        }
+        validarEmailDisponivel(email, id);
 
         usuario.setNome(nome);
         usuario.setEmail(email);
@@ -72,12 +69,8 @@ public class UsuarioService {
         Usuario usuario = buscarPorId(id);
         String hashAtual = usuario.getSenha();
 
-        if (senhaAtual == null || !passwordEncoder.matches(senhaAtual, hashAtual)) {
-            throw new IllegalArgumentException("Senha atual incorreta");
-        }
-        if (novaSenha == null || novaSenha.isBlank()) {
-            throw new IllegalArgumentException("Nova senha obrigatória");
-        }
+        validarSenhaAtual(senhaAtual, hashAtual);
+        validarNovaSenha(novaSenha);
 
         String novoHash = passwordEncoder.encode(novaSenha);
         usuario.setSenha(novoHash);
@@ -111,21 +104,14 @@ public class UsuarioService {
             throw new IllegalArgumentException("Dados do usuário obrigatórios");
         }
 
-        String nome = dados.getNome();
-        String email = dados.getEmail();
-
-        if (nome == null || nome.isBlank() || nome.strip().length() > 120) {
-            throw new IllegalArgumentException("Nome inválido");
-        }
-        if (email == null || email.length() > 150 || !EMAIL_VALIDO.matcher(email).matches()) {
-            throw new IllegalArgumentException("E-mail inválido");
-        }
+        validarNome(dados.getNome());
+        validarFormatoEmail(dados.getEmail());
     }
 
-    private boolean validarEmail(String email, Long id) {
+    private boolean emailPertenceAOutroUsuario(String email, Long id) {
         Optional<Usuario> encontrado = usuarioRepository.findByEmail(email);
         Usuario usuarioEncontrado = encontrado.orElse(null);
-        
+
         if (usuarioEncontrado == null) {
             return false;
         }
@@ -136,5 +122,44 @@ public class UsuarioService {
 
     private String normalizarEmail(String email) {
         return email.toLowerCase(Locale.ROOT);
+    }
+
+    private void validarNome(String nome) {
+        boolean nomeInvalido = nome == null || nome.isBlank() || nome.strip().length() > 120;
+
+        if (nomeInvalido) {
+            throw new IllegalArgumentException("Nome inválido");
+        }
+    }
+
+    private void validarFormatoEmail(String email) {
+        boolean emailInvalido = email == null || email.length() > 150
+                || !padraoEmail.matcher(email).matches();
+
+        if (emailInvalido) {
+            throw new IllegalArgumentException("E-mail inválido");
+        }
+    }
+
+    private void validarEmailDisponivel(String email, Long usuarioId) {
+        if (emailPertenceAOutroUsuario(email, usuarioId)) {
+            throw new IllegalArgumentException("E-mail já cadastrado");
+        }
+    }
+
+    private void validarSenhaAtual(String senhaAtual, String hashAtual) {
+        boolean senhaIncorreta = senhaAtual == null || !passwordEncoder.matches(senhaAtual, hashAtual);
+
+        if (senhaIncorreta) {
+            throw new IllegalArgumentException("Senha atual incorreta");
+        }
+    }
+
+    private void validarNovaSenha(String novaSenha) {
+        boolean senhaVazia = novaSenha == null || novaSenha.isBlank();
+
+        if (senhaVazia) {
+            throw new IllegalArgumentException("Nova senha obrigatória");
+        }
     }
 }

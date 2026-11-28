@@ -1,11 +1,11 @@
 package br.edu.bibliotech.api;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,6 +37,10 @@ public class AutorRest {
 			resposta.add(AutorResposta.fromAutor(autor));
 		}
 
+		if (resposta.isEmpty()) {
+			return ResponseEntity.notFound().build();
+		}
+
 		return ResponseEntity.ok(resposta);
 	}
 
@@ -48,16 +52,15 @@ public class AutorRest {
 
 	@PostMapping
 	public ResponseEntity<AutorResposta> cadastrar(@Valid @RequestBody RequisicaoNovoAutor requisicao) {
-		Autor autor = autorService.cadastrar(requisicao.toAutor());
+		Autor autor = autorService.cadastrar(requisicao.toEntidade());
 		AutorResposta resposta = AutorResposta.fromAutor(autor);
-		URI uri = URI.create("/service/autores/" + autor.getId());
 
-		return ResponseEntity.created(uri).body(resposta);
+		return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
 	}
 
 	@PutMapping("/{id}")
 	public ResponseEntity<AutorResposta> atualizar(@PathVariable Long id, @Valid @RequestBody RequisicaoNovoAutor requisicao) {
-		Autor autor = autorService.atualizar(id, requisicao.toAutor());
+		Autor autor = autorService.atualizar(id, requisicao.toEntidade());
 		return ResponseEntity.ok(AutorResposta.fromAutor(autor));
 	}
 

@@ -8,6 +8,7 @@ import br.edu.bibliotech.repository.ExemplarRepository;
 import br.edu.bibliotech.repository.LivroRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Locale;
@@ -27,6 +28,7 @@ public class ExemplarService {
         this.emprestimoRepository = emprestimoRepository;
     }
 
+    @Transactional
     public Exemplar cadastrar(Exemplar dados) {
         validarDados(dados);
 
@@ -46,6 +48,10 @@ public class ExemplarService {
                 .orElseThrow(() -> new EntityNotFoundException("Exemplar não encontrado: " + id));
     }
 
+    public List<Exemplar> listar() {
+        return exemplarRepository.findAll();
+    }
+
     public List<Exemplar> listarPorLivro(Long livroId) {
         if (livroId == null || !livroRepository.existsById(livroId)) {
             throw new EntityNotFoundException("Livro não encontrado: " + livroId);
@@ -59,6 +65,7 @@ public class ExemplarService {
         return exemplar.getStatus();
     }
 
+    @Transactional
     public Exemplar atualizar(Long id, Exemplar dados) {
         Exemplar exemplar = buscarPorId(id);
 
@@ -68,16 +75,8 @@ public class ExemplarService {
 
         validarCodigoUnico(codigoTombo, id);
 
-        Livro livroAtual = exemplar.getLivro();
         Livro livroInformado = dados.getLivro();
-
-        Long livroAtualId = livroAtual == null ? null : livroAtual.getId();
-        Long livroInformadoId = livroInformado == null ? null : livroInformado.getId();
-
-        if (!Objects.equals(livroAtualId, livroInformadoId)
-                && emprestimoRepository.existsByExemplarId(id)) {
-            throw new IllegalStateException("Exemplar com histórico não pode mudar de livro");
-        }
+        validarMudancaDeLivro(id, exemplar, livroInformado);
 
         Livro livro = buscarLivro(livroInformado);
 
@@ -91,7 +90,10 @@ public class ExemplarService {
         Exemplar exemplar = buscarPorId(id);
         StatusExemplar status = exemplar.getStatus();
 
-        if (status == StatusExemplar.EMPRESTADO || emprestimoRepository.existsByExemplarId(id)) {
+        boolean exclusaoBloqueada = status == StatusExemplar.EMPRESTADO
+                || emprestimoRepository.existsByExemplarId(id);
+
+        if (exclusaoBloqueada) {
             throw new IllegalStateException("Exemplar emprestado ou com histórico não pode ser excluído");
         }
 
@@ -105,7 +107,10 @@ public class ExemplarService {
 
         String codigoTombo = dados.getCodigoTombo();
 
-        if (codigoTombo == null || codigoTombo.isBlank() || codigoTombo.strip().length() > 20) {
+        boolean codigoInvalido = codigoTombo == null || codigoTombo.isBlank()
+                || codigoTombo.strip().length() > 20;
+
+        if (codigoInvalido) {
             throw new IllegalArgumentException("Código de tombo inválido");
         }
     }
@@ -116,15 +121,15 @@ public class ExemplarService {
 
     private void validarCodigoUnico(String codigoTombo, Long id) {
         Optional<Exemplar> encontrado = exemplarRepository.findByCodigoTombo(codigoTombo);
-        
+
         Exemplar exemplarEncontrado = encontrado.orElse(null);
-        
+
         if (exemplarEncontrado == null) {
             return;
         }
 
         Long idEncontrado = exemplarEncontrado.getId();
-        
+
         if (id == null || !Objects.equals(idEncontrado, id)) {
             throw new IllegalArgumentException("Código de tombo já cadastrado");
         }
@@ -136,11 +141,32 @@ public class ExemplarService {
         }
 
         Long livroId = referencia.getId();
-        
+
         if (livroId == null) {
             throw new IllegalArgumentException("Livro cadastrado é obrigatório");
         }
         return livroRepository.findById(livroId)
                 .orElseThrow(() -> new EntityNotFoundException("Livro não encontrado: " + livroId));
+    }
+
+    private void validarMudancaDeLivro(Long exemplarId, Exemplar exemplar, Livro livroInformado) {
+        Long livroAtualId = obterIdLivro(exemplar.getLivro());
+        Long livroInformadoId = obterIdLivro(livroInformado);
+
+        if (Objects.equals(livroAtualId, livroInformadoId)) {
+            return;
+        }
+
+        if (emprestimoRepository.existsByExemplarId(exemplarId)) {
+            throw new IllegalStateException("Exemplar com histórico não pode mudar de livro");
+        }
+    }
+
+    private Long obterIdLivro(Livro livro) {
+        if (livro == null) {
+            return null;
+        }
+
+        return livro.getId();
     }
 }

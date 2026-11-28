@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{base :: head('Entrar')}"></head>
+<body>
+    <header th:replace="~{base :: header}"></header>
+    <main class="formulario">
+        <h1 th:replace="~{base :: titulo('Entrar')}">Entrar</h1>
+        <p class="erro" role="alert" th:if="${param.error}">E-mail ou senha inválidos, ou usuário inativo.</p>
+        <p class="sucesso" th:if="${param.logout}">Você saiu do sistema.</p>
+        <form th:action="@{/login}" method="post">
+            <div class="campo">
+                <label for="email">E-mail</label>
+                <input id="email" name="email" type="email" required autocomplete="username">
+            </div>
+            <div class="campo">
+                <label for="senha">Senha</label>
+                <input id="senha" name="password" type="password" required autocomplete="current-password">
+            </div>
+            <button type="submit">Entrar</button>
+        </form>
+    </main>
+</body>
+</html>

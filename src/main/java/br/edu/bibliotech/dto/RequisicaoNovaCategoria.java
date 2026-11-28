@@ -6,11 +6,11 @@ import jakarta.validation.constraints.Size;
 
 public class RequisicaoNovaCategoria {
 
-	@NotBlank(message = "O nome da categoria é obrigatório")
-	@Size(max = 80, message = "O nome da categoria deve ter no máximo 80 caracteres")
+	@NotBlank(message = "{validacao.categoria.nome.obrigatorio}")
+	@Size(max = 80, message = "{validacao.categoria.nome.tamanho}")
 	private String nome;
 
-	@Size(max = 255, message = "A descrição deve ter no máximo 255 caracteres")
+	@Size(max = 255, message = "{validacao.categoria.descricao.tamanho}")
 	private String descricao;
 
 	public String getNome() {
@@ -29,7 +29,7 @@ public class RequisicaoNovaCategoria {
 		this.descricao = descricao;
 	}
 
-	public Categoria toCategoria() {
+	public Categoria toEntidade() {
 		Categoria categoria = new Categoria();
 		categoria.setNome(this.nome);
 		categoria.setDescricao(this.descricao);

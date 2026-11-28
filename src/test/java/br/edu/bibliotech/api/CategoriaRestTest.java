@@ -17,15 +17,60 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import br.edu.bibliotech.model.Categoria;
 import br.edu.bibliotech.service.CategoriaService;
+import jakarta.persistence.EntityNotFoundException;
 
 @WebMvcTest(CategoriaRest.class)
+@AutoConfigureMockMvc(addFilters = false)
 class CategoriaRestTest {
+	@Test
+	void deveRetornar404QuandoListaEstaVazia() throws Exception {
+		when(categoriaService.listar()).thenReturn(List.of());
+
+		var resposta = mockMvc.perform(get("/service/categorias"));
+
+		resposta.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void deveRetornar404QuandoCategoriaNaoExiste() throws Exception {
+		when(categoriaService.buscarPorId(99L))
+				.thenThrow(new EntityNotFoundException("Categoria não encontrada"));
+
+		var resposta = mockMvc.perform(get("/service/categorias/99"));
+
+		resposta.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void deveBuscarCategoriaExistentePorId() throws Exception {
+		Categoria categoria = new Categoria("Romance", null);
+		categoria.setId(10L);
+		when(categoriaService.buscarPorId(10L)).thenReturn(categoria);
+
+		var resposta = mockMvc.perform(get("/service/categorias/10"));
+
+		resposta.andExpect(status().isOk())
+				.andExpect(jsonPath("$.nome").value("Romance"));
+	}
+
+	@Test
+	void deveRetornar404AoAtualizarCategoriaInexistente() throws Exception {
+		when(categoriaService.atualizar(org.mockito.ArgumentMatchers.eq(99L), any(Categoria.class)))
+				.thenThrow(new EntityNotFoundException("Categoria não encontrada"));
+
+		var resposta = mockMvc.perform(put("/service/categorias/99")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"nome\":\"Romance\"}"));
+
+		resposta.andExpect(status().isNotFound());
+	}
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -49,7 +94,7 @@ class CategoriaRestTest {
 					{"nome": "Romance", "descricao": "Livros de ficção"}
 					"""))
 			.andExpect(status().isCreated())
-			.andExpect(header().string("Location", "/service/categorias/10"))
+			.andExpect(header().doesNotExist("Location"))
 			.andExpect(jsonPath("$.id").value(10))
 			.andExpect(jsonPath("$.nome").value("Romance"))
 			.andExpect(jsonPath("$.livros").doesNotExist());

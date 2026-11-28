@@ -1,5 +1,7 @@
 package br.edu.bibliotech.service;
 
+import jakarta.persistence.EntityNotFoundException;
+
 import br.edu.bibliotech.model.Autor;
 import br.edu.bibliotech.model.Livro;
 import br.edu.bibliotech.repository.AutorRepository;
@@ -17,7 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -35,7 +37,8 @@ class AutorServiceTest {
     @Test
     void deveCadastrarAutorValido() {
         Autor novo = new Autor("Machado de Assis", "Brasileira", LocalDate.of(1839, 6, 21));
-        when(autorRepository.save(any(Autor.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+        when(autorRepository.save(any(Autor.class)))
+                .thenAnswer(invocacao -> invocacao.getArgument(0));
 
         Autor salvo = autorService.cadastrar(novo);
 
@@ -48,7 +51,8 @@ class AutorServiceTest {
     @Test
     void deveCadastrarSemDadosOpcionais() {
         Autor novo = new Autor("Machado de Assis", null, null);
-        when(autorRepository.save(any(Autor.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+        when(autorRepository.save(any(Autor.class)))
+                .thenAnswer(invocacao -> invocacao.getArgument(0));
 
         Autor salvo = autorService.cadastrar(novo);
 
@@ -62,7 +66,9 @@ class AutorServiceTest {
     void naoDeveCadastrarNomeVazio(String nome) {
         Autor novo = new Autor(nome, "Brasileira", null);
 
-        assertThatThrownBy(() -> autorService.cadastrar(novo)).isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> autorService.cadastrar(novo));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(autorRepository, never()).save(any(Autor.class));
     }
@@ -71,7 +77,9 @@ class AutorServiceTest {
     void naoDeveCadastrarNomeAcimaDoLimite() {
         Autor novo = new Autor("A".repeat(121), "Brasileira", null);
 
-        assertThatThrownBy(() -> autorService.cadastrar(novo)).isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> autorService.cadastrar(novo));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(autorRepository, never()).save(any(Autor.class));
     }
@@ -80,7 +88,9 @@ class AutorServiceTest {
     void naoDeveCadastrarNacionalidadeAcimaDoLimite() {
         Autor novo = new Autor("Machado de Assis", "B".repeat(61), null);
 
-        assertThatThrownBy(() -> autorService.cadastrar(novo)).isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> autorService.cadastrar(novo));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(autorRepository, never()).save(any(Autor.class));
     }
@@ -91,14 +101,18 @@ class AutorServiceTest {
         existente.setId(10L);
         when(autorRepository.findById(10L)).thenReturn(Optional.of(existente));
 
-        assertThat(autorService.buscarPorId(10L)).isSameAs(existente);
+        var resultado = autorService.buscarPorId(10L);
+
+        assertThat(resultado).isSameAs(existente);
     }
 
     @Test
     void naoDeveBuscarAutorInexistente() {
         when(autorRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> autorService.buscarPorId(999L)).isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> autorService.buscarPorId(999L));
+
+        assertThat(erro).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -107,7 +121,9 @@ class AutorServiceTest {
         Autor segundo = new Autor("Clarice Lispector", "Brasileira", null);
         when(autorRepository.findAll()).thenReturn(List.of(primeiro, segundo));
 
-        assertThat(autorService.listar()).containsExactly(primeiro, segundo);
+        var resultado = autorService.listar();
+
+        assertThat(resultado).containsExactly(primeiro, segundo);
     }
 
     @Test
@@ -119,7 +135,8 @@ class AutorServiceTest {
         LocalDate novaData = LocalDate.of(1839, 6, 21);
         Autor novosDados = new Autor("Joaquim Maria Machado de Assis", "Brasil", novaData);
         when(autorRepository.findById(10L)).thenReturn(Optional.of(existente));
-        when(autorRepository.save(any(Autor.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+        when(autorRepository.save(any(Autor.class)))
+                .thenAnswer(invocacao -> invocacao.getArgument(0));
 
         Autor atualizado = autorService.atualizar(10L, novosDados);
 
@@ -134,8 +151,9 @@ class AutorServiceTest {
     void naoDeveAtualizarAutorInexistente() {
         when(autorRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> autorService.atualizar(999L, new Autor("Nome", null, null)))
-                .isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> autorService.atualizar(999L, new Autor("Nome", null, null)));
+
+        assertThat(erro).isInstanceOf(EntityNotFoundException.class);
 
         verify(autorRepository, never()).save(any(Autor.class));
     }
@@ -146,8 +164,9 @@ class AutorServiceTest {
         existente.setId(10L);
         when(autorRepository.findById(10L)).thenReturn(Optional.of(existente));
 
-        assertThatThrownBy(() -> autorService.atualizar(10L, new Autor("  ", "Brasil", null)))
-                .isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> autorService.atualizar(10L, new Autor("  ", "Brasil", null)));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(autorRepository, never()).save(any(Autor.class));
         assertThat(existente.getNome()).isEqualTo("Machado de Assis");
@@ -168,8 +187,11 @@ class AutorServiceTest {
     void naoDeveExcluirAutorInexistente() {
         when(autorRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> autorService.excluir(999L)).isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> autorService.excluir(999L));
+
+        assertThat(erro).isInstanceOf(EntityNotFoundException.class);
 
         verify(autorRepository, never()).delete(any(Autor.class));
     }
+
 }

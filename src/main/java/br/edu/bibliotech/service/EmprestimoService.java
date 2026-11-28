@@ -8,6 +8,7 @@ import br.edu.bibliotech.repository.ExemplarRepository;
 import br.edu.bibliotech.repository.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -26,38 +27,26 @@ public class EmprestimoService {
         this.usuarioRepository = usuarioRepository;
     }
 
+    @Transactional
     public Emprestimo registrar(Long usuarioId, Long exemplarId) {
         return registrar(usuarioId, exemplarId, LocalDate.now());
     }
 
+    @Transactional
     public Emprestimo registrar(Long usuarioId, Long exemplarId, LocalDate dataEmprestimo) {
-        if (dataEmprestimo == null) {
-            throw new IllegalArgumentException("Data do empréstimo obrigatória");
-        }
+        validarDataEmprestimo(dataEmprestimo);
 
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado: " + usuarioId));
-        
-        Boolean ativo = usuario.getAtivo();
-        
-        if (!Boolean.TRUE.equals(ativo)) {
-            throw new IllegalStateException("Usuário inativo não pode emprestar");
-        }
+        Usuario usuario = buscarUsuario(usuarioId);
+        validarUsuarioAtivo(usuario);
+        validarLimiteDeEmprestimos(usuarioId);
 
-        long emprestimosAtivos = emprestimoRepository.countByUsuarioIdAndDataDevolucaoIsNull(usuarioId);
-        
-        if (emprestimosAtivos >= Usuario.LIMITE_EMPRESTIMOS_ATIVOS) {
-            throw new IllegalStateException("Limite de empréstimos ativos atingido");
-        }
-
-        Exemplar exemplar = exemplarRepository.findById(exemplarId)
-                .orElseThrow(() -> new EntityNotFoundException("Exemplar não encontrado: " + exemplarId));
+        Exemplar exemplar = buscarExemplar(exemplarId);
         exemplar.emprestar();
 
         Emprestimo emprestimo = new Emprestimo(exemplar, usuario, dataEmprestimo);
-        
+
         exemplarRepository.save(exemplar);
-        
+
         return emprestimoRepository.save(emprestimo);
     }
 
@@ -66,26 +55,23 @@ public class EmprestimoService {
                 .orElseThrow(() -> new EntityNotFoundException("Empréstimo não encontrado: " + id));
     }
 
+    @Transactional
     public Emprestimo devolver(Long id) {
         return devolver(id, LocalDate.now());
     }
 
+    @Transactional
     public Emprestimo devolver(Long id, LocalDate dataDevolucao) {
         Emprestimo emprestimo = buscarPorId(id);
-        
-        if (emprestimo.getDataDevolucao() != null) {
-            throw new IllegalStateException("Empréstimo já devolvido");
-        }
-        if (dataDevolucao == null || dataDevolucao.isBefore(emprestimo.getDataEmprestimo())) {
-            throw new IllegalArgumentException("Data de devolução inválida");
-        }
+
+        validarDevolucao(emprestimo, dataDevolucao);
 
         BigDecimal multa = emprestimo.calcularMulta(dataDevolucao);
         Exemplar exemplar = emprestimo.getExemplar();
-        
+
         emprestimo.setDataDevolucao(dataDevolucao);
         emprestimo.setMulta(multa);
-        
+
         exemplar.devolver();
 
         exemplarRepository.save(exemplar);
@@ -93,12 +79,17 @@ public class EmprestimoService {
         return emprestimoRepository.save(emprestimo);
     }
 
+    @Transactional
     public Emprestimo renovar(Long id) {
         Emprestimo emprestimo = buscarPorId(id);
 
         emprestimo.renovar();
 
         return emprestimoRepository.save(emprestimo);
+    }
+
+    public List<Emprestimo> listar() {
+        return emprestimoRepository.findAll();
     }
 
     public List<Emprestimo> listarPorUsuario(Long usuarioId) {
@@ -120,5 +111,49 @@ public class EmprestimoService {
                 .filter(emprestimo -> emprestimo.getDataDevolucao() == null)
                 .filter(emprestimo -> emprestimo.getDataPrevista().isBefore(hoje))
                 .toList();
+    }
+
+    private void validarDataEmprestimo(LocalDate dataEmprestimo) {
+        if (dataEmprestimo == null) {
+            throw new IllegalArgumentException("Data do empréstimo obrigatória");
+        }
+    }
+
+    private Usuario buscarUsuario(Long usuarioId) {
+        return usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado: " + usuarioId));
+    }
+
+    private Exemplar buscarExemplar(Long exemplarId) {
+        return exemplarRepository.findById(exemplarId)
+                .orElseThrow(() -> new EntityNotFoundException("Exemplar não encontrado: " + exemplarId));
+    }
+
+    private void validarUsuarioAtivo(Usuario usuario) {
+        if (!Boolean.TRUE.equals(usuario.getAtivo())) {
+            throw new IllegalStateException("Usuário inativo não pode emprestar");
+        }
+    }
+
+    private void validarLimiteDeEmprestimos(Long usuarioId) {
+        long quantidadeAtiva = emprestimoRepository.countByUsuarioIdAndDataDevolucaoIsNull(usuarioId);
+        boolean limiteAtingido = quantidadeAtiva >= Usuario.LIMITE_EMPRESTIMOS_ATIVOS;
+
+        if (limiteAtingido) {
+            throw new IllegalStateException("Limite de empréstimos ativos atingido");
+        }
+    }
+
+    private void validarDevolucao(Emprestimo emprestimo, LocalDate dataDevolucao) {
+        if (emprestimo.getDataDevolucao() != null) {
+            throw new IllegalStateException("Empréstimo já devolvido");
+        }
+
+        boolean dataInvalida = dataDevolucao == null
+                || dataDevolucao.isBefore(emprestimo.getDataEmprestimo());
+
+        if (dataInvalida) {
+            throw new IllegalArgumentException("Data de devolução inválida");
+        }
     }
 }

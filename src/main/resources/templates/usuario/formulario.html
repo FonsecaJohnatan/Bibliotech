@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{base :: head('Cadastro de usuário')}"></head>
+<body>
+	<header th:replace="~{base :: header}"></header>
+	<main class="formulario">
+		<a th:href="@{/usuario}">Voltar para usuários</a>
+		<h1>Novo usuário</h1>
+		<p>Todos os campos são obrigatórios.</p>
+		<form th:object="${requisicaoNovoUsuario}" th:action="@{/usuario/novo}" method="post">
+			<div class="erro" role="alert" th:if="${#fields.hasGlobalErrors()}">
+				<p th:each="erro : ${#fields.globalErrors()}" th:text="${erro}"></p>
+			</div>
+			<div class="campo">
+				<label for="nome">Nome</label>
+				<input id="nome" type="text" th:field="*{nome}" maxlength="120" required th:errorclass="invalido" aria-describedby="nome-erro">
+				<small id="nome-erro" class="erro-campo" th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}"></small>
+			</div>
+			<div class="campo">
+				<label for="email">E-mail</label>
+				<input id="email" type="email" th:field="*{email}" maxlength="150" required th:errorclass="invalido" aria-describedby="email-erro">
+				<small id="email-erro" class="erro-campo" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></small>
+			</div>
+			<div class="campo">
+				<label for="senha">Senha</label>
+				<input id="senha" name="senha" type="password" autocomplete="new-password" required th:classappend="${#fields.hasErrors('senha')} ? 'invalido'" aria-describedby="senha-erro">
+				<small id="senha-erro" class="erro-campo" th:if="${#fields.hasErrors('senha')}" th:errors="*{senha}"></small>
+			</div>
+			<div class="campo">
+				<label for="perfil">Perfil</label>
+				<select id="perfil" th:field="*{perfil}" required th:errorclass="invalido" aria-describedby="perfil-erro">
+					<option value="">Selecione um perfil</option>
+					<option th:each="perfil : ${perfis}" th:value="${perfil}" th:text="${#messages.msg('perfil.' + perfil)}"></option>
+				</select>
+				<small id="perfil-erro" class="erro-campo" th:if="${#fields.hasErrors('perfil')}" th:errors="*{perfil}"></small>
+			</div>
+			<div class="acoes">
+				<button type="submit">Salvar</button>
+				<a th:href="@{/usuario}">Cancelar</a>
+			</div>
+		</form>
+	</main>
+</body>
+</html>

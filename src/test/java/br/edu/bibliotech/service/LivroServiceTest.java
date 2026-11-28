@@ -1,5 +1,7 @@
 package br.edu.bibliotech.service;
 
+import jakarta.persistence.EntityNotFoundException;
+
 import br.edu.bibliotech.model.Autor;
 import br.edu.bibliotech.model.Categoria;
 import br.edu.bibliotech.model.Exemplar;
@@ -20,7 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -29,10 +31,14 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class LivroServiceTest {
 
-    @Mock private LivroRepository livroRepository;
-    @Mock private CategoriaRepository categoriaRepository;
-    @Mock private AutorRepository autorRepository;
-    @InjectMocks private LivroService livroService;
+    @Mock
+    private LivroRepository livroRepository;
+    @Mock
+    private CategoriaRepository categoriaRepository;
+    @Mock
+    private AutorRepository autorRepository;
+    @InjectMocks
+    private LivroService livroService;
 
     @Test
     void deveCadastrarLivroComCategoriaEAutoresExistentes() {
@@ -55,7 +61,8 @@ class LivroServiceTest {
         when(categoriaRepository.findById(10L)).thenReturn(Optional.of(categoriaSalva));
         when(autorRepository.findById(20L)).thenReturn(Optional.of(primeiroSalvo));
         when(autorRepository.findById(21L)).thenReturn(Optional.of(segundoSalvo));
-        when(livroRepository.save(any(Livro.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+        when(livroRepository.save(any(Livro.class)))
+                .thenAnswer(invocacao -> invocacao.getArgument(0));
 
         Livro salvo = livroService.cadastrar(dados);
 
@@ -64,7 +71,7 @@ class LivroServiceTest {
         assertThat(salvo.getAnoPublicacao()).isEqualTo(1899);
         assertThat(salvo.getCategoria()).isSameAs(categoriaSalva);
         assertThat(salvo.getAutores()).containsExactlyInAnyOrder(primeiroSalvo, segundoSalvo);
-        
+
         verify(livroRepository).save(any(Livro.class));
     }
 
@@ -72,9 +79,10 @@ class LivroServiceTest {
     void deveCadastrarLivroSemAutores() {
         Categoria categoria = new Categoria("Romance", null);
         categoria.setId(10L);
-        
+
         when(categoriaRepository.findById(10L)).thenReturn(Optional.of(categoria));
-        when(livroRepository.save(any(Livro.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+        when(livroRepository.save(any(Livro.class)))
+                .thenAnswer(invocacao -> invocacao.getArgument(0));
 
         Livro salvo = livroService.cadastrar(new Livro("Livro anônimo", "9780110002224", null, categoria));
 
@@ -86,9 +94,10 @@ class LivroServiceTest {
     void deveNormalizarIsbnComSeparadores() {
         Categoria categoria = new Categoria("Romance", null);
         categoria.setId(10L);
-        
+
         when(categoriaRepository.findById(10L)).thenReturn(Optional.of(categoria));
-        when(livroRepository.save(any(Livro.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+        when(livroRepository.save(any(Livro.class)))
+                .thenAnswer(invocacao -> invocacao.getArgument(0));
 
         Livro salvo = livroService.cadastrar(new Livro("Livro", "978-0-11-000222-4", null, categoria));
 
@@ -101,7 +110,9 @@ class LivroServiceTest {
     void naoDeveCadastrarTituloVazio(String titulo) {
         Livro dados = new Livro(titulo, "9780110002224", null, new Categoria("Romance", null));
 
-        assertThatThrownBy(() -> livroService.cadastrar(dados)).isInstanceOf(IllegalArgumentException.class);
+        Throwable erro = catchThrowable(() -> livroService.cadastrar(dados));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(livroRepository, never()).save(any(Livro.class));
     }
@@ -110,7 +121,9 @@ class LivroServiceTest {
     void naoDeveCadastrarTituloAcimaDoLimite() {
         Livro dados = new Livro("T".repeat(201), "9780110002224", null, null);
 
-        assertThatThrownBy(() -> livroService.cadastrar(dados)).isInstanceOf(IllegalArgumentException.class);
+        Throwable erro = catchThrowable(() -> livroService.cadastrar(dados));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(livroRepository, never()).save(any(Livro.class));
     }
@@ -121,7 +134,9 @@ class LivroServiceTest {
     void naoDeveCadastrarIsbnInvalido(String isbn) {
         Livro dados = new Livro("Livro", isbn, null, null);
 
-        assertThatThrownBy(() -> livroService.cadastrar(dados)).isInstanceOf(IllegalArgumentException.class);
+        Throwable erro = catchThrowable(() -> livroService.cadastrar(dados));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(livroRepository, never()).save(any(Livro.class));
     }
@@ -132,9 +147,10 @@ class LivroServiceTest {
         existente.setId(30L);
         when(livroRepository.findByIsbn("9780110002224")).thenReturn(Optional.of(existente));
 
-        assertThatThrownBy(() -> livroService.cadastrar(
-                new Livro("Livro", "9780110002224", null, null)))
-                .isInstanceOf(IllegalArgumentException.class);
+        Throwable erro = catchThrowable(() -> livroService.cadastrar(
+                new Livro("Livro", "9780110002224", null, null)));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(livroRepository, never()).save(any(Livro.class));
     }
@@ -143,7 +159,9 @@ class LivroServiceTest {
     void naoDeveCadastrarSemCategoria() {
         Livro dados = new Livro("Livro", "9780110002224", null, null);
 
-        assertThatThrownBy(() -> livroService.cadastrar(dados)).isInstanceOf(IllegalArgumentException.class);
+        Throwable erro = catchThrowable(() -> livroService.cadastrar(dados));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(livroRepository, never()).save(any(Livro.class));
     }
@@ -153,8 +171,9 @@ class LivroServiceTest {
         Livro dados = new Livro("Livro", "9780110002224", null,
                 new Categoria("Romance", null));
 
-        assertThatThrownBy(() -> livroService.cadastrar(dados))
-                .isInstanceOf(IllegalArgumentException.class);
+        Throwable erro = catchThrowable(() -> livroService.cadastrar(dados));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(livroRepository, never()).save(any(Livro.class));
     }
@@ -165,9 +184,10 @@ class LivroServiceTest {
         categoria.setId(999L);
         when(categoriaRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> livroService.cadastrar(
-                new Livro("Livro", "9780110002224", null, categoria)))
-                .isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> livroService.cadastrar(
+                new Livro("Livro", "9780110002224", null, categoria)));
+
+        assertThat(erro).isInstanceOf(EntityNotFoundException.class);
 
         verify(livroRepository, never()).save(any(Livro.class));
     }
@@ -180,11 +200,13 @@ class LivroServiceTest {
         autor.setId(999L);
         Livro dados = new Livro("Livro", "9780110002224", null, categoria);
         dados.getAutores().add(autor);
-        
+
         when(categoriaRepository.findById(10L)).thenReturn(Optional.of(categoria));
         when(autorRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> livroService.cadastrar(dados)).isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> livroService.cadastrar(dados));
+
+        assertThat(erro).isInstanceOf(EntityNotFoundException.class);
 
         verify(livroRepository, never()).save(any(Livro.class));
     }
@@ -197,8 +219,9 @@ class LivroServiceTest {
         dados.getAutores().add(new Autor("Autor não salvo", null, null));
         when(categoriaRepository.findById(10L)).thenReturn(Optional.of(categoria));
 
-        assertThatThrownBy(() -> livroService.cadastrar(dados))
-                .isInstanceOf(IllegalArgumentException.class);
+        Throwable erro = catchThrowable(() -> livroService.cadastrar(dados));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(livroRepository, never()).save(any(Livro.class));
     }
@@ -209,14 +232,18 @@ class LivroServiceTest {
         existente.setId(30L);
         when(livroRepository.findById(30L)).thenReturn(Optional.of(existente));
 
-        assertThat(livroService.buscarPorId(30L)).isSameAs(existente);
+        var resultado = livroService.buscarPorId(30L);
+
+        assertThat(resultado).isSameAs(existente);
     }
 
     @Test
     void naoDeveBuscarLivroInexistente() {
         when(livroRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> livroService.buscarPorId(999L)).isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> livroService.buscarPorId(999L));
+
+        assertThat(erro).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -225,7 +252,9 @@ class LivroServiceTest {
         Livro segundo = new Livro("Segundo", "9780110002231", null, null);
         when(livroRepository.findAll()).thenReturn(List.of(primeiro, segundo));
 
-        assertThat(livroService.listar()).containsExactly(primeiro, segundo);
+        var resultado = livroService.listar();
+
+        assertThat(resultado).containsExactly(primeiro, segundo);
     }
 
     @Test
@@ -242,11 +271,12 @@ class LivroServiceTest {
         existente.getExemplares().add(exemplar);
         Livro dados = new Livro("  Novo título  ", "9780110002231", 2020, categoriaNova);
         dados.getAutores().add(autorNovo);
-        
+
         when(livroRepository.findById(30L)).thenReturn(Optional.of(existente));
         when(categoriaRepository.findById(11L)).thenReturn(Optional.of(categoriaNova));
         when(autorRepository.findById(21L)).thenReturn(Optional.of(autorNovo));
-        when(livroRepository.save(any(Livro.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+        when(livroRepository.save(any(Livro.class)))
+                .thenAnswer(invocacao -> invocacao.getArgument(0));
 
         Livro atualizado = livroService.atualizar(30L, dados);
 
@@ -265,11 +295,12 @@ class LivroServiceTest {
         categoria.setId(10L);
         Livro existente = new Livro("Antigo", "9780110002224", null, categoria);
         existente.setId(30L);
-        
+
         when(livroRepository.findById(30L)).thenReturn(Optional.of(existente));
         when(livroRepository.findByIsbn("9780110002224")).thenReturn(Optional.of(existente));
         when(categoriaRepository.findById(10L)).thenReturn(Optional.of(categoria));
-        when(livroRepository.save(any(Livro.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+        when(livroRepository.save(any(Livro.class)))
+                .thenAnswer(invocacao -> invocacao.getArgument(0));
 
         Livro atualizado = livroService.atualizar(30L,
                 new Livro("Novo título", "9780110002224", null, categoria));
@@ -284,13 +315,14 @@ class LivroServiceTest {
         existente.setId(30L);
         Livro outro = new Livro("Outro", "9780110002231", null, null);
         outro.setId(31L);
-        
+
         when(livroRepository.findById(30L)).thenReturn(Optional.of(existente));
         when(livroRepository.findByIsbn("9780110002231")).thenReturn(Optional.of(outro));
 
-        assertThatThrownBy(() -> livroService.atualizar(30L,
-                new Livro("Novo", "9780110002231", null, null)))
-                .isInstanceOf(IllegalArgumentException.class);
+        Throwable erro = catchThrowable(() -> livroService.atualizar(30L,
+                new Livro("Novo", "9780110002231", null, null)));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         assertThat(existente.getTitulo()).isEqualTo("Antigo");
         verify(livroRepository, never()).save(any(Livro.class));
@@ -302,13 +334,14 @@ class LivroServiceTest {
         existente.setId(30L);
         Categoria categoria = new Categoria("Desconhecida", null);
         categoria.setId(999L);
-        
+
         when(livroRepository.findById(30L)).thenReturn(Optional.of(existente));
         when(categoriaRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> livroService.atualizar(30L,
-                new Livro("Novo", "9780110002231", null, categoria)))
-                .isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> livroService.atualizar(30L,
+                new Livro("Novo", "9780110002231", null, categoria)));
+
+        assertThat(erro).isInstanceOf(EntityNotFoundException.class);
 
         assertThat(existente.getTitulo()).isEqualTo("Antigo");
         verify(livroRepository, never()).save(any(Livro.class));
@@ -324,13 +357,14 @@ class LivroServiceTest {
         autor.setId(999L);
         Livro dados = new Livro("Novo", "9780110002231", null, categoria);
         dados.getAutores().add(autor);
-        
+
         when(livroRepository.findById(30L)).thenReturn(Optional.of(existente));
         when(categoriaRepository.findById(10L)).thenReturn(Optional.of(categoria));
         when(autorRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> livroService.atualizar(30L, dados))
-                .isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> livroService.atualizar(30L, dados));
+
+        assertThat(erro).isInstanceOf(EntityNotFoundException.class);
 
         assertThat(existente.getTitulo()).isEqualTo("Antigo");
         verify(livroRepository, never()).save(any(Livro.class));
@@ -340,9 +374,10 @@ class LivroServiceTest {
     void naoDeveAtualizarLivroInexistente() {
         when(livroRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> livroService.atualizar(999L,
-                new Livro("Novo", "9780110002224", null, null)))
-                .isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> livroService.atualizar(999L,
+                new Livro("Novo", "9780110002224", null, null)));
+
+        assertThat(erro).isInstanceOf(EntityNotFoundException.class);
 
         verify(livroRepository, never()).save(any(Livro.class));
     }
@@ -362,8 +397,11 @@ class LivroServiceTest {
     void naoDeveExcluirLivroInexistente() {
         when(livroRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> livroService.excluir(999L)).isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> livroService.excluir(999L));
+
+        assertThat(erro).isInstanceOf(EntityNotFoundException.class);
 
         verify(livroRepository, never()).delete(any(Livro.class));
     }
+
 }

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{base :: head('Devolução')}"></head>
+<body>
+    <header th:replace="~{base :: header}"></header>
+    <main class="formulario">
+        <a th:href="@{/emprestimo}">Voltar para empréstimos</a>
+        <h1 th:replace="~{base :: titulo('Devolução')}">Devolução</h1>
+        <p><strong>Usuário:</strong> <span th:text="${emprestimo.usuario.nome}"></span></p>
+        <p><strong>Livro:</strong> <span th:text="${emprestimo.exemplar.livro.titulo}"></span></p>
+        <p><strong>Exemplar:</strong> <span th:text="${emprestimo.exemplar.codigoTombo}"></span></p>
+        <p><strong>Prazo:</strong> <span th:text="${#temporals.format(emprestimo.dataPrevista, 'dd/MM/yyyy')}"></span></p>
+        <p class="sucesso" th:if="${emprestimo.dataDevolucao != null}">Este empréstimo já foi devolvido.</p>
+        <form th:if="${emprestimo.dataDevolucao == null}" th:action="@{/emprestimo/{id}/devolver(id=${emprestimo.id})}" method="post">
+            <p>Confirme a devolução do exemplar. A multa será calculada na data de hoje.</p>
+            <div class="acoes">
+                <button type="submit">Confirmar devolução</button>
+                <a th:href="@{/emprestimo}">Cancelar</a>
+            </div>
+        </form>
+    </main>
+</body>
+</html>

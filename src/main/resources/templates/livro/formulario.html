@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{base :: head('Cadastro de livro')}"></head>
+<body>
+	<header th:replace="~{base :: header}"></header>
+	<main class="formulario">
+		<a th:href="@{/livro}">Voltar para livros</a>
+		<h1 th:text="${id != null ? 'Editar livro' : 'Novo livro'}">Cadastro</h1>
+		<p>Título, ISBN e categoria são obrigatórios.</p>
+		<p class="erro" th:if="${#lists.isEmpty(categorias)}">
+			Cadastre uma <a th:href="@{/categoria/formulario}">categoria</a> antes de salvar o livro.
+		</p>
+		<form th:object="${requisicaoNovoLivro}" th:action="${id != null} ? @{/livro/{id}(id=${id})} : @{/livro/novo}" method="post">
+			<div class="erro" role="alert" th:if="${#fields.hasGlobalErrors()}">
+				<p th:each="erro : ${#fields.globalErrors()}" th:text="${erro}"></p>
+			</div>
+			<div class="campo">
+				<label for="titulo">Título</label>
+				<input id="titulo" type="text" th:field="*{titulo}" maxlength="200" required th:errorclass="invalido" aria-describedby="titulo-erro">
+				<small id="titulo-erro" class="erro-campo" th:if="${#fields.hasErrors('titulo')}" th:errors="*{titulo}"></small>
+			</div>
+			<div class="campo">
+				<label for="isbn">ISBN</label>
+				<input id="isbn" type="text" th:field="*{isbn}" required th:errorclass="invalido" aria-describedby="isbn-ajuda isbn-erro">
+				<small id="isbn-ajuda">Informe um ISBN de 13 dígitos. Espaços e hífens são aceitos.</small>
+				<small id="isbn-erro" class="erro-campo" th:if="${#fields.hasErrors('isbn')}" th:errors="*{isbn}"></small>
+			</div>
+			<div class="campo">
+				<label for="anoPublicacao">Ano de publicação</label>
+				<input id="anoPublicacao" type="number" step="1" th:field="*{anoPublicacao}" th:errorclass="invalido" aria-describedby="ano-erro">
+				<small id="ano-erro" class="erro-campo" th:if="${#fields.hasErrors('anoPublicacao')}" th:errors="*{anoPublicacao}"></small>
+			</div>
+			<div class="campo">
+				<label for="categoriaId">Categoria</label>
+				<select id="categoriaId" th:field="*{categoriaId}" required th:errorclass="invalido" aria-describedby="categoria-erro">
+					<option value="">Selecione uma categoria</option>
+					<option th:each="categoria : ${categorias}" th:value="${categoria.id}" th:text="${categoria.nome}"></option>
+				</select>
+				<small id="categoria-erro" class="erro-campo" th:if="${#fields.hasErrors('categoriaId')}" th:errors="*{categoriaId}"></small>
+			</div>
+			<div class="campo">
+				<label for="autoresIds">Autores</label>
+				<select id="autoresIds" th:field="*{autoresIds}" multiple size="5" th:errorclass="invalido" aria-describedby="autores-ajuda autores-erro">
+					<option th:each="autor : ${autores}" th:value="${autor.id}" th:text="${autor.nome}"></option>
+				</select>
+				<small id="autores-ajuda">Opcional. Use Ctrl (ou Command) para selecionar ou desmarcar vários autores.</small>
+				<p th:if="${#lists.isEmpty(autores)}">Nenhum autor cadastrado. <a th:href="@{/autor/formulario}">Cadastrar autor</a>.</p>
+				<small id="autores-erro" class="erro-campo" th:if="${#fields.hasErrors('autoresIds')}" th:errors="*{autoresIds}"></small>
+			</div>
+			<div class="acoes">
+				<button type="submit" th:disabled="${#lists.isEmpty(categorias)}">Salvar</button>
+				<a th:href="@{/livro}">Cancelar</a>
+			</div>
+		</form>
+	</main>
+</body>
+</html>

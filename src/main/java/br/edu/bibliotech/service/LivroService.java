@@ -8,6 +8,7 @@ import br.edu.bibliotech.repository.CategoriaRepository;
 import br.edu.bibliotech.repository.LivroRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +29,7 @@ public class LivroService {
         this.autorRepository = autorRepository;
     }
 
+    @Transactional
     public Livro cadastrar(Livro dados) {
         validarDadosBasicos(dados);
 
@@ -55,25 +57,18 @@ public class LivroService {
         return livroRepository.findAll();
     }
 
+    @Transactional
     public Livro atualizar(Long id, Livro dados) {
         Livro livro = buscarPorId(id);
-
         validarDadosBasicos(dados);
 
-        String titulo = dados.getTitulo().strip();
         String isbn = normalizarIsbn(dados.getIsbn());
-        Integer anoPublicacao = dados.getAnoPublicacao();
-
         validarIsbnUnico(isbn, id);
 
         Categoria categoria = buscarCategoria(dados.getCategoria());
         Set<Autor> autores = buscarAutores(dados.getAutores());
 
-        livro.setTitulo(titulo);
-        livro.setIsbn(isbn);
-        livro.setAnoPublicacao(anoPublicacao);
-        livro.setCategoria(categoria);
-        livro.setAutores(autores);
+        preencherLivro(livro, dados, isbn, categoria, autores);
 
         return livroRepository.save(livro);
     }
@@ -88,15 +83,8 @@ public class LivroService {
             throw new IllegalArgumentException("Dados do livro obrigatórios");
         }
 
-        String titulo = dados.getTitulo();
-        String isbn = dados.getIsbn();
-
-        if (titulo == null || titulo.isBlank() || titulo.strip().length() > 200) {
-            throw new IllegalArgumentException("Título inválido");
-        }
-        if (isbn == null || !isbnValido(normalizarIsbn(isbn))) {
-            throw new IllegalArgumentException("ISBN inválido");
-        }
+        validarTitulo(dados.getTitulo());
+        validarIsbn(dados.getIsbn());
     }
 
     private String normalizarIsbn(String isbn) {
@@ -150,16 +138,50 @@ public class LivroService {
         }
 
         for (Autor referencia : referencias) {
-            if (referencia == null || referencia.getId() == null) {
-                throw new IllegalArgumentException("Autor informado precisa estar cadastrado");
-            }
-
-            Long autorId = referencia.getId();
-            Autor autor = autorRepository.findById(autorId)
-                    .orElseThrow(() -> new EntityNotFoundException("Autor não encontrado: " + autorId));
+            Autor autor = buscarAutor(referencia);
             autores.add(autor);
         }
-        
+
         return autores;
+    }
+
+    private void preencherLivro(Livro livro, Livro dados, String isbn,
+            Categoria categoria, Set<Autor> autores) {
+        String titulo = dados.getTitulo().strip();
+
+        livro.setTitulo(titulo);
+        livro.setIsbn(isbn);
+        livro.setAnoPublicacao(dados.getAnoPublicacao());
+        livro.setCategoria(categoria);
+        livro.setAutores(autores);
+    }
+
+    private void validarTitulo(String titulo) {
+        boolean tituloInvalido = titulo == null || titulo.isBlank() || titulo.strip().length() > 200;
+
+        if (tituloInvalido) {
+            throw new IllegalArgumentException("Título inválido");
+        }
+    }
+
+    private void validarIsbn(String isbn) {
+        boolean isbnInvalido = isbn == null || !isbnValido(normalizarIsbn(isbn));
+
+        if (isbnInvalido) {
+            throw new IllegalArgumentException("ISBN inválido");
+        }
+    }
+
+    private Autor buscarAutor(Autor referencia) {
+        boolean autorSemCadastro = referencia == null || referencia.getId() == null;
+
+        if (autorSemCadastro) {
+            throw new IllegalArgumentException("Autor informado precisa estar cadastrado");
+        }
+
+        Long autorId = referencia.getId();
+
+        return autorRepository.findById(autorId)
+                .orElseThrow(() -> new EntityNotFoundException("Autor não encontrado: " + autorId));
     }
 }

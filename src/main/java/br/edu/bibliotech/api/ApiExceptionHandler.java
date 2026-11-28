@@ -24,6 +24,13 @@ public class ApiExceptionHandler {
 		return ResponseEntity.badRequest().body(erro);
 	}
 
+	@ExceptionHandler(IllegalStateException.class)
+	public ResponseEntity<ErroResposta> tratarEstadoInvalido(IllegalStateException exception) {
+		ErroResposta erro = new ErroResposta();
+		erro.setMensagem(exception.getMessage());
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(erro);
+	}
+
 	public static class ErroResposta {
 
 		private String mensagem;

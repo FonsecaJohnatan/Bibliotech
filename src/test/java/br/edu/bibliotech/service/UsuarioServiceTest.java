@@ -1,5 +1,7 @@
 package br.edu.bibliotech.service;
 
+import jakarta.persistence.EntityNotFoundException;
+
 import br.edu.bibliotech.model.Perfil;
 import br.edu.bibliotech.model.Emprestimo;
 import br.edu.bibliotech.model.Usuario;
@@ -19,7 +21,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -37,7 +39,8 @@ class UsuarioServiceTest {
     @Test
     void deveCadastrarUsuarioValido() {
         Usuario novo = new Usuario("Maria", "MARIA@EMAIL.COM", "senhaEmTextoPuro", Perfil.LEITOR);
-        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+        when(usuarioRepository.save(any(Usuario.class)))
+                .thenAnswer(invocacao -> invocacao.getArgument(0));
 
         Usuario salvo = usuarioService.cadastrar(novo);
 
@@ -53,7 +56,9 @@ class UsuarioServiceTest {
     void naoDeveCadastrarNomeVazio(String nome) {
         Usuario novo = new Usuario(nome, "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
 
-        assertThatThrownBy(() -> usuarioService.cadastrar(novo)).isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> usuarioService.cadastrar(novo));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(usuarioRepository, never()).save(any(Usuario.class));
     }
@@ -64,7 +69,9 @@ class UsuarioServiceTest {
     void naoDeveCadastrarEmailInvalido(String email) {
         Usuario novo = new Usuario("Maria", email, "senhaEmTextoPuro", Perfil.LEITOR);
 
-        assertThatThrownBy(() -> usuarioService.cadastrar(novo)).isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> usuarioService.cadastrar(novo));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(usuarioRepository, never()).save(any(Usuario.class));
     }
@@ -74,9 +81,10 @@ class UsuarioServiceTest {
         Usuario existente = new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
         when(usuarioRepository.findByEmail("maria@email.com")).thenReturn(Optional.of(existente));
 
-        assertThatThrownBy(() -> usuarioService.cadastrar(
-                new Usuario("Outra", "MARIA@EMAIL.COM", "senhaEmTextoPuro", Perfil.LEITOR)))
-                .isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> usuarioService.cadastrar(
+                new Usuario("Outra", "MARIA@EMAIL.COM", "senhaEmTextoPuro", Perfil.LEITOR)));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(usuarioRepository, never()).save(any(Usuario.class));
     }
@@ -86,9 +94,12 @@ class UsuarioServiceTest {
     void deveAceitarPerfisValidos(Perfil perfil) {
         Usuario novo = new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
         novo.setPerfil(perfil);
-        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+        when(usuarioRepository.save(any(Usuario.class)))
+                .thenAnswer(invocacao -> invocacao.getArgument(0));
 
-        assertThat(usuarioService.cadastrar(novo).getPerfil()).isEqualTo(perfil);
+        var resultado = usuarioService.cadastrar(novo).getPerfil();
+
+        assertThat(resultado).isEqualTo(perfil);
     }
 
     @Test
@@ -96,7 +107,9 @@ class UsuarioServiceTest {
         Usuario novo = new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
         novo.setPerfil(null);
 
-        assertThatThrownBy(() -> usuarioService.cadastrar(novo)).isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> usuarioService.cadastrar(novo));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(usuarioRepository, never()).save(any(Usuario.class));
     }
@@ -107,14 +120,18 @@ class UsuarioServiceTest {
         existente.setId(10L);
         when(usuarioRepository.findById(10L)).thenReturn(Optional.of(existente));
 
-        assertThat(usuarioService.buscarPorId(10L)).isSameAs(existente);
+        var resultado = usuarioService.buscarPorId(10L);
+
+        assertThat(resultado).isSameAs(existente);
     }
 
     @Test
     void naoDeveBuscarUsuarioInexistente() {
         when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> usuarioService.buscarPorId(999L)).isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> usuarioService.buscarPorId(999L));
+
+        assertThat(erro).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -123,7 +140,9 @@ class UsuarioServiceTest {
         Usuario segundo = new Usuario("João", "joao@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
         when(usuarioRepository.findAll()).thenReturn(List.of(primeiro, segundo));
 
-        assertThat(usuarioService.listar()).containsExactly(primeiro, segundo);
+        var resultado = usuarioService.listar();
+
+        assertThat(resultado).containsExactly(primeiro, segundo);
     }
 
     @Test
@@ -134,7 +153,8 @@ class UsuarioServiceTest {
         Usuario novosDados = new Usuario("Maria Silva", "MARIA.SILVA@EMAIL.COM",
                 "senhaEmTextoPuro", Perfil.LEITOR);
         when(usuarioRepository.findById(10L)).thenReturn(Optional.of(existente));
-        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+        when(usuarioRepository.save(any(Usuario.class)))
+                .thenAnswer(invocacao -> invocacao.getArgument(0));
 
         Usuario atualizado = usuarioService.atualizar(10L, novosDados);
 
@@ -153,9 +173,10 @@ class UsuarioServiceTest {
         when(usuarioRepository.findById(10L)).thenReturn(Optional.of(existente));
         when(usuarioRepository.findByEmail("joao@email.com")).thenReturn(Optional.of(outro));
 
-        assertThatThrownBy(() -> usuarioService.atualizar(10L,
-                new Usuario("Maria", "JOAO@EMAIL.COM", "senhaEmTextoPuro", Perfil.LEITOR)))
-                .isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> usuarioService.atualizar(10L,
+                new Usuario("Maria", "JOAO@EMAIL.COM", "senhaEmTextoPuro", Perfil.LEITOR)));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(usuarioRepository, never()).save(any(Usuario.class));
         assertThat(existente.getEmail()).isEqualTo("maria@email.com");
@@ -165,9 +186,10 @@ class UsuarioServiceTest {
     void naoDeveAtualizarUsuarioInexistente() {
         when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> usuarioService.atualizar(999L,
-                new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR)))
-                .isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> usuarioService.atualizar(999L,
+                new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR)));
+
+        assertThat(erro).isInstanceOf(EntityNotFoundException.class);
 
         verify(usuarioRepository, never()).save(any(Usuario.class));
     }
@@ -178,9 +200,10 @@ class UsuarioServiceTest {
         existente.setId(10L);
         when(usuarioRepository.findById(10L)).thenReturn(Optional.of(existente));
 
-        assertThatThrownBy(() -> usuarioService.atualizar(10L,
-                new Usuario("  ", "novo@email.com", "senhaEmTextoPuro", Perfil.LEITOR)))
-                .isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> usuarioService.atualizar(10L,
+                new Usuario("  ", "novo@email.com", "senhaEmTextoPuro", Perfil.LEITOR)));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(usuarioRepository, never()).save(any(Usuario.class));
         assertThat(existente.getNome()).isEqualTo("Maria");
@@ -192,9 +215,10 @@ class UsuarioServiceTest {
         existente.setId(10L);
         when(usuarioRepository.findById(10L)).thenReturn(Optional.of(existente));
 
-        assertThatThrownBy(() -> usuarioService.atualizar(10L,
-                new Usuario("Novo nome", "email-invalido", "senhaEmTextoPuro", Perfil.LEITOR)))
-                .isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> usuarioService.atualizar(10L,
+                new Usuario("Novo nome", "email-invalido", "senhaEmTextoPuro", Perfil.LEITOR)));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(usuarioRepository, never()).save(any(Usuario.class));
         assertThat(existente.getNome()).isEqualTo("Maria");
@@ -220,7 +244,9 @@ class UsuarioServiceTest {
     void naoDeveDesativarUsuarioInexistente() {
         when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> usuarioService.desativar(999L)).isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> usuarioService.desativar(999L));
+
+        assertThat(erro).isInstanceOf(EntityNotFoundException.class);
 
         verify(usuarioRepository, never()).delete(any(Usuario.class));
     }
@@ -228,7 +254,8 @@ class UsuarioServiceTest {
     @Test
     void deveProtegerSenha() {
         Usuario novo = new Usuario("Maria", "maria@email.com", "senhaEmTextoPuro", Perfil.LEITOR);
-        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+        when(usuarioRepository.save(any(Usuario.class)))
+                .thenAnswer(invocacao -> invocacao.getArgument(0));
 
         Usuario salvo = usuarioService.cadastrar(novo);
 
@@ -243,7 +270,8 @@ class UsuarioServiceTest {
         existente.setId(10L);
         existente.setSenha(encoder.encode("senhaAntiga"));
         when(usuarioRepository.findById(10L)).thenReturn(Optional.of(existente));
-        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+        when(usuarioRepository.save(any(Usuario.class)))
+                .thenAnswer(invocacao -> invocacao.getArgument(0));
 
         Usuario atualizado = usuarioService.alterarSenha(10L, "senhaAntiga", "senhaNova");
 
@@ -263,8 +291,9 @@ class UsuarioServiceTest {
         existente.setSenha(hashOriginal);
         when(usuarioRepository.findById(10L)).thenReturn(Optional.of(existente));
 
-        assertThatThrownBy(() -> usuarioService.alterarSenha(10L, "senhaErrada", "senhaNova"))
-                .isInstanceOf(IllegalArgumentException.class);
+        Throwable erro = catchThrowable(() -> usuarioService.alterarSenha(10L, "senhaErrada", "senhaNova"));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         assertThat(existente.getSenha()).isEqualTo(hashOriginal);
         verify(usuarioRepository, never()).save(any(Usuario.class));
@@ -281,8 +310,9 @@ class UsuarioServiceTest {
         existente.setSenha(hashOriginal);
         when(usuarioRepository.findById(10L)).thenReturn(Optional.of(existente));
 
-        assertThatThrownBy(() -> usuarioService.alterarSenha(10L, "senhaAntiga", novaSenha))
-                .isInstanceOf(IllegalArgumentException.class);
+        Throwable erro = catchThrowable(() -> usuarioService.alterarSenha(10L, "senhaAntiga", novaSenha));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         assertThat(existente.getSenha()).isEqualTo(hashOriginal);
         verify(usuarioRepository, never()).save(any(Usuario.class));
@@ -292,9 +322,11 @@ class UsuarioServiceTest {
     void naoDeveAlterarSenhaDeUsuarioInexistente() {
         when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> usuarioService.alterarSenha(999L, "senhaAntiga", "senhaNova"))
-                .isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> usuarioService.alterarSenha(999L, "senhaAntiga", "senhaNova"));
+
+        assertThat(erro).isInstanceOf(EntityNotFoundException.class);
 
         verify(usuarioRepository, never()).save(any(Usuario.class));
     }
+
 }

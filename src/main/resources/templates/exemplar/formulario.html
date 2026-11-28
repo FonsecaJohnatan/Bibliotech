@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{base :: head('Cadastro de exemplar')}"></head>
+<body>
+	<header th:replace="~{base :: header}"></header>
+	<main class="formulario">
+		<a th:href="@{/exemplar}">Voltar para exemplares</a>
+		<h1 th:text="${id != null ? 'Editar exemplar' : 'Novo exemplar'}">Cadastro</h1>
+		<p>Código de tombo e livro são obrigatórios.</p>
+		<p class="erro" th:if="${#lists.isEmpty(livros)}">
+			Cadastre um <a th:href="@{/livro/formulario}">livro</a> antes de salvar o exemplar.
+		</p>
+		<form th:object="${requisicaoNovoExemplar}" th:action="${id != null} ? @{/exemplar/{id}(id=${id})} : @{/exemplar/novo}" method="post">
+			<div class="erro" role="alert" th:if="${#fields.hasGlobalErrors()}">
+				<p th:each="erro : ${#fields.globalErrors()}" th:text="${erro}"></p>
+			</div>
+			<div class="campo">
+				<label for="codigoTombo">Código de tombo</label>
+				<input id="codigoTombo" type="text" th:field="*{codigoTombo}" maxlength="20" required th:errorclass="invalido" aria-describedby="codigo-ajuda codigo-erro">
+				<small id="codigo-ajuda">Informe o código que identifica este exemplar na biblioteca.</small>
+				<small id="codigo-erro" class="erro-campo" th:if="${#fields.hasErrors('codigoTombo')}" th:errors="*{codigoTombo}"></small>
+			</div>
+			<div class="campo">
+				<label for="livroId">Livro</label>
+				<select id="livroId" th:field="*{livroId}" required th:errorclass="invalido" aria-describedby="livro-erro">
+					<option value="">Selecione um livro</option>
+					<option th:each="livro : ${livros}" th:value="${livro.id}" th:text="${livro.titulo} + ' — ' + ${livro.isbn}"></option>
+				</select>
+				<small id="livro-erro" class="erro-campo" th:if="${#fields.hasErrors('livroId')}" th:errors="*{livroId}"></small>
+			</div>
+			<div class="acoes">
+				<button type="submit" th:disabled="${#lists.isEmpty(livros)}">Salvar</button>
+				<a th:href="@{/exemplar}">Cancelar</a>
+			</div>
+		</form>
+	</main>
+</body>
+</html>
