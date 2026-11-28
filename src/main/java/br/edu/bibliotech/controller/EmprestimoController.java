@@ -1,6 +1,8 @@
 package br.edu.bibliotech.controller;
 
-import java.util.ArrayList;
+import br.edu.bibliotech.dto.VerificacaoEmprestimo;
+import org.springframework.web.bind.annotation.ResponseBody;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import br.edu.bibliotech.dto.RequisicaoNovoEmprestimo;
 import br.edu.bibliotech.model.Exemplar;
+import br.edu.bibliotech.model.Emprestimo;
 import br.edu.bibliotech.model.StatusExemplar;
 import br.edu.bibliotech.model.Usuario;
 import br.edu.bibliotech.service.EmprestimoService;
@@ -28,100 +31,112 @@ import jakarta.validation.Valid;
 @RequestMapping("/emprestimo")
 public class EmprestimoController {
 
-	@Autowired
-	private EmprestimoService emprestimoService;
+    @Autowired
+    private EmprestimoService emprestimoService;
 
-	@Autowired
-	private UsuarioService usuarioService;
+    @Autowired
+    private UsuarioService usuarioService;
 
-	@Autowired
-	private ExemplarService exemplarService;
+    @Autowired
+    private ExemplarService exemplarService;
 
-	@GetMapping
-	public String listar(@RequestParam(required = false) Long usuarioId, Model model) {
-		if (usuarioId == null) {
-			model.addAttribute("emprestimos", this.emprestimoService.listar());
-		} else {
-			this.usuarioService.buscarPorId(usuarioId);
-			model.addAttribute("emprestimos", this.emprestimoService.listarPorUsuario(usuarioId));
-		}
+    @GetMapping
+    public String listar(@RequestParam(required = false) Long usuarioId,
+            @RequestParam(defaultValue = "") String situacao, Model model) {
+        if (usuarioId != null) {
+            usuarioService.buscarPorId(usuarioId);
+        }
 
-		model.addAttribute("usuarioId", usuarioId);
-		model.addAttribute("usuarios", this.usuarioService.listar());
-		return "emprestimo/lista";
-	}
+        model.addAttribute("emprestimos", emprestimoService.filtrar(usuarioId, situacao));
+        model.addAttribute("usuarios", usuarioService.listar());
+        model.addAttribute("usuarioId", usuarioId);
+        model.addAttribute("situacao", situacao);
+        model.addAttribute("hoje", LocalDate.now());
+        return "emprestimo/lista";
+    }
 
-	@GetMapping("formulario")
-	public String formulario(RequisicaoNovoEmprestimo requisicao, Model model) {
-		carregarOpcoes(model);
-		return "emprestimo/formulario";
-	}
+    @GetMapping("verificar")
+    @ResponseBody
+    public VerificacaoEmprestimo verificar(@RequestParam Long usuarioId) {
+        return emprestimoService.verificarUsuario(usuarioId);
+    }
 
-	@PostMapping("novo")
-	public String novo(@Valid RequisicaoNovoEmprestimo requisicao, BindingResult result, Model model) {
-		if(result.hasErrors()) {
-			carregarOpcoes(model);
-			return "emprestimo/formulario";
-		}
+    @GetMapping("formulario")
+    public String formulario(RequisicaoNovoEmprestimo requisicao, Model model) {
+        carregarOpcoes(model, requisicao);
+        return "emprestimo/formulario";
+    }
 
-		try {
-			this.emprestimoService.registrar(requisicao.getUsuarioId(), requisicao.getExemplarId());
-		} catch (IllegalArgumentException | IllegalStateException | EntityNotFoundException exception) {
-			result.reject("cadastro", exception.getMessage());
-			carregarOpcoes(model);
-			return "emprestimo/formulario";
-		}
+    @PostMapping("novo")
+    public String novo(@Valid RequisicaoNovoEmprestimo requisicao, BindingResult result, Model model) {
+        if(result.hasErrors()) {
+            carregarOpcoes(model, requisicao);
+            return "emprestimo/formulario";
+        }
 
-		return "redirect:/home";
-	}
+        try {
+            this.emprestimoService.registrar(requisicao.getUsuarioId(), requisicao.getExemplarId());
+        } catch (IllegalArgumentException | IllegalStateException | EntityNotFoundException exception) {
+            result.reject("cadastro", exception.getMessage());
+            carregarOpcoes(model, requisicao);
+            return "emprestimo/formulario";
+        }
 
-	@PostMapping("/{id}/renovar")
-	public String renovar(@PathVariable Long id, RedirectAttributes atributos) {
-		try {
-			this.emprestimoService.renovar(id);
-		} catch (IllegalStateException exception) {
-			atributos.addFlashAttribute("erro", exception.getMessage());
-			return "redirect:/emprestimo";
-		}
+        return "redirect:/emprestimo";
+    }
 
-		return "redirect:/home";
-	}
+    @PostMapping("/{id}/renovar")
+    public String renovar(@PathVariable Long id, RedirectAttributes atributos) {
+        try {
+            this.emprestimoService.renovar(id);
+        } catch (IllegalStateException exception) {
+            atributos.addFlashAttribute("erro", exception.getMessage());
+            return "redirect:/emprestimo";
+        }
 
-	@PostMapping("/{id}/devolver")
-	public String devolver(@PathVariable Long id, RedirectAttributes atributos) {
-		try {
-			this.emprestimoService.devolver(id);
-		} catch (IllegalArgumentException | IllegalStateException exception) {
-			atributos.addFlashAttribute("erro", exception.getMessage());
-			return "redirect:/emprestimo";
-		}
+        return "redirect:/emprestimo";
+    }
 
-		return "redirect:/home";
-	}
+    @PostMapping("/{id}/devolver")
+    public String devolver(@PathVariable Long id, RedirectAttributes atributos) {
+        try {
+            this.emprestimoService.devolver(id);
+        } catch (IllegalArgumentException | IllegalStateException exception) {
+            atributos.addFlashAttribute("erro", exception.getMessage());
+            return "redirect:/emprestimo";
+        }
 
-	@GetMapping("/{id}/devolucao")
-	public String confirmarDevolucao(@PathVariable Long id, Model model) {
-		model.addAttribute("emprestimo", emprestimoService.buscarPorId(id));
-		return "emprestimo/devolucao";
-	}
+        return "redirect:/emprestimo";
+    }
 
-	private void carregarOpcoes(Model model) {
-		List<Usuario> usuarios = new ArrayList<>();
-		List<Exemplar> exemplares = new ArrayList<>();
+    @GetMapping("/{id}/devolucao")
+    public String confirmarDevolucao(@PathVariable Long id, Model model) {
+        model.addAttribute("emprestimo", emprestimoService.buscarPorId(id));
+        model.addAttribute("hoje", LocalDate.now());
+        return "emprestimo/devolucao";
+    }
 
-		for (Usuario usuario : this.usuarioService.listar()) {
-			if (Boolean.TRUE.equals(usuario.getAtivo())) {
-				usuarios.add(usuario);
-			}
-		}
+    private void carregarOpcoes(Model model, RequisicaoNovoEmprestimo requisicao) {
+        List<Usuario> usuarios = usuarioService.listar();
+        List<Exemplar> exemplares = exemplarService.listar().stream()
+                .filter(exemplar -> exemplar.getStatus() == StatusExemplar.DISPONIVEL)
+                .toList();
 
-		for (Exemplar exemplar : this.exemplarService.listar()) {
-			if (exemplar.getStatus() == StatusExemplar.DISPONIVEL) {
-				exemplares.add(exemplar);
-			}
-		}
+        model.addAttribute("usuarios", usuarios);
+        model.addAttribute("exemplares", exemplares);
+        model.addAttribute("dataPrevista", LocalDate.now().plusDays(Emprestimo.PRAZO_DIAS));
+        carregarVerificacao(model, requisicao, usuarios, exemplares);
+    }
 
-		model.addAttribute("usuarios", usuarios);
-		model.addAttribute("exemplares", exemplares);
-	}
+    private void carregarVerificacao(Model model, RequisicaoNovoEmprestimo requisicao,
+            List<Usuario> usuarios, List<Exemplar> exemplares) {
+        boolean usuarioExiste = usuarios.stream()
+                .anyMatch(usuario -> usuario.getId().equals(requisicao.getUsuarioId()));
+        boolean exemplarDisponivel = exemplares.stream()
+                .anyMatch(exemplar -> exemplar.getId().equals(requisicao.getExemplarId()));
+        var verificacao = usuarioExiste ? emprestimoService.verificarUsuario(requisicao.getUsuarioId()) : null;
+
+        model.addAttribute("verificacao", verificacao);
+        model.addAttribute("podeConfirmar", verificacao != null && verificacao.permitido() && exemplarDisponivel);
+    }
 }

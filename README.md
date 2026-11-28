@@ -70,17 +70,29 @@ mvn spring-boot:run
 Com a aplicação no ar, o console do H2 fica em <http://localhost:8080/h2-console>
 (JDBC URL: `jdbc:h2:mem:bibliotech`, usuário `sa`, senha em branco).
 
-Para criar o primeiro administrador, defina as variáveis de ambiente
-`BIBLIOTECH_ADMIN_EMAIL` e `BIBLIOTECH_ADMIN_SENHA` antes de iniciar a aplicação.
+Para criar o primeiro administrador, copie `.env.example` para `.env` na raiz
+do projeto e preencha `BIBLIOTECH_ADMIN_EMAIL` e `BIBLIOTECH_ADMIN_SENHA`.
+O Spring carrega esse arquivo ao executar `mvn spring-boot:run` nessa pasta.
+As variáveis de ambiente também podem ser usadas e têm prioridade sobre o arquivo.
+O `.env` não é versionado; os testes não criam o administrador inicial.
 A conta inicial só é criada quando ainda não há um administrador. A senha é armazenada
 com BCrypt. Use o e-mail e a senha configurados em `/login`.
 
-O catálogo (`/home`, `/livro` e `/livro/{id}`) é público. Usuários autenticados
-podem consultar `/meus-emprestimos`. As telas de cadastro e empréstimos exigem
-perfil `ADMIN` ou `BIBLIOTECARIO`. Na API, leitura pública se limita aos
-recursos não sensíveis; alterações, usuários e empréstimos exigem esses perfis.
-Clientes da API podem autenticar com HTTP Basic. Os formulários MVC usam
-proteção CSRF.
+O catálogo em `/home` permite buscar por título, autor ou ISBN e filtrar por
+categoria e disponibilidade. Ao acessar `/` ou `/home` sem sessão, o controller
+redireciona para `/login`. Após entrar, o usuário acessa o catálogo.
+As demais rotas MVC, REST e Swagger continuam sem filtro global de acesso.
+O menu mostra Entrar quando não há sessão. Os links variam conforme o perfil;
+isso organiza a navegação, mas não bloqueia acesso direto às rotas.
+
+O link Criar conta no login abre `/cadastro` para cadastrar um leitor com nome,
+e-mail e senha. O login verifica o hash BCrypt e guarda na sessão apenas ID, nome
+e perfil. O logout encerra a sessão. Meus empréstimos usa essa sessão para buscar
+os registros do próprio usuário e pede login quando não há sessão.
+
+Não há Spring Security, HTTP Basic ou tokens CSRF. A biblioteca
+`spring-security-crypto` é usada somente para BCrypt. A sessão usa cookie;
+seu identificador não é incluído na URL.
 
 Para usar PostgreSQL, ajuste as propriedades indicadas em `src/main/resources/application.properties`.
 
@@ -103,7 +115,7 @@ As duas interfaces usam os
 mesmos services, repositories e DTOs de requisição.
 
 Os formulários exibem erros de validação e de categoria duplicada.
-Após salvar, redirecionam para `/home`, que apresenta o catálogo de livros.
+Após salvar ou editar, cada formulário redireciona para a lista do próprio recurso.
 As demais listas ficam nas páginas de cada recurso, acessíveis pelo menu conforme o perfil.
 
 ### Livros
@@ -152,7 +164,8 @@ Exemplo de JSON para cadastrar:
 ```
 
 Nome, e-mail, senha e perfil são obrigatórios no cadastro. Os perfis disponíveis
-são `ADMIN`, `BIBLIOTECARIO` e `LEITOR`. O service normaliza o e-mail, impede
+são `ADMIN`, `BIBLIOTECARIO` e `LEITOR`. O campo `ativo` permite criar uma
+conta inativa; quando omitido, vale `true`. O service normaliza o e-mail, impede
 duplicidade e criptografa a senha com BCrypt.
 
 Na edição, envie somente `nome` e `email`. A senha, o perfil e a situação
@@ -180,7 +193,9 @@ Exemplo de JSON para cadastrar ou atualizar:
 
 O código de tombo é obrigatório, único e limitado a 20 caracteres. O livro deve
 estar cadastrado. O service remove espaços nas extremidades e converte o código
-para maiúsculas. O exemplar começa como `DISPONIVEL`; a edição preserva seu status.
+para maiúsculas. No MVC, é possível definir `DISPONIVEL` ou `INDISPONIVEL` e
+filtrar por status. `EMPRESTADO` é controlado pelo empréstimo e pela devolução.
+Na API, o exemplar começa como `DISPONIVEL` e a edição preserva o status.
 Exemplares com histórico não podem mudar de livro e exemplares emprestados ou
 com histórico não podem ser excluídos. Esses conflitos retornam HTTP 409 na API
 e uma mensagem na tela MVC. A resposta inclui os dados do livro, sem ciclos de
@@ -205,14 +220,22 @@ Exemplo de JSON para registrar:
 }
 ```
 
-O usuário deve estar ativo, com menos de três empréstimos em aberto, e o exemplar
-deve estar disponível. O formulário apresenta usuários ativos e exemplares disponíveis.
+O usuário deve estar ativo, sem empréstimos atrasados e com menos de três
+empréstimos em aberto; o exemplar deve estar disponível. O formulário permite
+buscar usuário por nome/e-mail e exemplar por código/título. As verificações
+aparecem antes da confirmação e são repetidas no servidor.
 O cadastro usa a data atual e o prazo de 14 dias definido no modelo.
-A renovação acrescenta sete dias e pode ocorrer uma vez, antes da devolução.
+A renovação acrescenta sete dias e pode ocorrer uma vez, enquanto o empréstimo
+estiver em dia e ainda não tiver sido devolvido. Em `/meus-emprestimos`, cada
+usuário pode renovar somente os próprios empréstimos.
+A listagem de gestão filtra por `situacao=ABERTOS`, `ATRASADOS` ou `DEVOLVIDOS`.
 As rotas de renovação e devolução não precisam de corpo na requisição.
 
 A devolução usa a data atual, calcula a multa de R$ 1,00 por dia de atraso e
-libera o exemplar. O histórico é mantido. Na tela, a multa aparece após a devolução.
+libera o exemplar. A janela de confirmação mostra dias de atraso e multa antes
+de registrar a devolução. O histórico é mantido.
+O total mostrado em Meus empréstimos soma apenas a multa dos empréstimos ainda
+em atraso. A devolução retira esse valor do total; não há registro de pagamento.
 A API retorna datas, multa, usuário e exemplar, sem senha ou relacionamentos recursivos.
 Violações das regras retornam HTTP 409; referências inexistentes retornam HTTP 404.
 No MVC, os erros são exibidos no formulário ou na listagem.
@@ -220,7 +243,8 @@ No MVC, os erros são exibidos no formulário ou na listagem.
 ## Swagger
 
 Com a aplicação iniciada, abra <http://localhost:8080/swagger-ui.html> para
-consultar e testar a API REST. A especificação OpenAPI está disponível em
+consultar e testar a API REST sem login.
+A especificação OpenAPI está disponível em
 <http://localhost:8080/v3/api-docs>.
 
 A documentação inclui somente as rotas `/service/**`, usando

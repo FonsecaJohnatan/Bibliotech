@@ -13,6 +13,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import br.edu.bibliotech.dto.RequisicaoNovoExemplar;
 import br.edu.bibliotech.model.Exemplar;
+import br.edu.bibliotech.model.StatusExemplar;
+import java.util.List;
 import br.edu.bibliotech.service.ExemplarService;
 import br.edu.bibliotech.service.LivroService;
 import jakarta.persistence.EntityNotFoundException;
@@ -29,12 +31,13 @@ public class ExemplarController {
 	private LivroService livroService;
 
 	@GetMapping
-	public String listar(@RequestParam(required = false) Long livroId, Model model) {
-		if (livroId == null) {
-			model.addAttribute("exemplares", this.exemplarService.listar());
-		} else {
-			model.addAttribute("exemplares", this.exemplarService.listarPorLivro(livroId));
-		}
+	public String listar(@RequestParam(required = false) Long livroId,
+            @RequestParam(required = false) StatusExemplar status, Model model) {
+        List<Exemplar> exemplares = livroId == null ? exemplarService.listar() : exemplarService.listarPorLivro(livroId);
+        model.addAttribute("exemplares", exemplares.stream()
+                .filter(exemplar -> status == null || exemplar.getStatus() == status)
+                .toList());
+        model.addAttribute("status", status);
 
 		model.addAttribute("livroId", livroId);
 		carregarOpcoes(model);
@@ -56,14 +59,14 @@ public class ExemplarController {
 
 		try {
 			Exemplar exemplar = requisicao.toEntidade();
-			this.exemplarService.cadastrar(exemplar);
+			this.exemplarService.cadastrar(exemplar, requisicao.getStatus());
 		} catch (IllegalArgumentException | EntityNotFoundException exception) {
 			result.reject("cadastro", exception.getMessage());
 			carregarOpcoes(model);
 			return "exemplar/formulario";
 		}
 
-		return "redirect:/home";
+		return "redirect:/exemplar";
 	}
 
 	@GetMapping("/{id}/editar")
@@ -71,6 +74,7 @@ public class ExemplarController {
 		Exemplar exemplar = this.exemplarService.buscarPorId(id);
 		RequisicaoNovoExemplar requisicao = new RequisicaoNovoExemplar();
 		requisicao.setCodigoTombo(exemplar.getCodigoTombo());
+        requisicao.setStatus(exemplar.getStatus());
 		requisicao.setLivroId(exemplar.getLivro().getId());
 
 		model.addAttribute("requisicaoNovoExemplar", requisicao);
@@ -92,14 +96,14 @@ public class ExemplarController {
 
 		try {
 			Exemplar exemplar = requisicao.toEntidade();
-			this.exemplarService.atualizar(id, exemplar);
+			this.exemplarService.atualizar(id, exemplar, requisicao.getStatus());
 		} catch (IllegalArgumentException | IllegalStateException | EntityNotFoundException exception) {
 			result.reject("atualizacao", exception.getMessage());
 			carregarOpcoes(model);
 			return "exemplar/formulario";
 		}
 
-		return "redirect:/home";
+		return "redirect:/exemplar";
 	}
 
 	@PostMapping("/{id}/excluir")
@@ -111,10 +115,11 @@ public class ExemplarController {
 			return "redirect:/exemplar";
 		}
 
-		return "redirect:/home";
+		return "redirect:/exemplar";
 	}
 
 	private void carregarOpcoes(Model model) {
 		model.addAttribute("livros", this.livroService.listar());
+        model.addAttribute("statusExemplares", StatusExemplar.values());
 	}
 }

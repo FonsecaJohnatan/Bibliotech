@@ -15,7 +15,8 @@
 				<thead>
 					<tr>
 						<th scope="col">Título</th>
-						<th scope="col">ISBN</th>
+						<th scope="col">Disponíveis</th>
+                        <th scope="col">ISBN</th>
 						<th scope="col">Ano</th>
 						<th scope="col">Categoria</th>
 						<th scope="col">Autores</th>
@@ -25,7 +26,8 @@
 				<tbody>
 					<tr th:each="livro : ${livros}">
 						<td><a th:href="@{/livro/{id}(id=${livro.id})}" th:text="${livro.titulo}"></a></td>
-						<td th:text="${livro.isbn}"></td>
+						<td th:text="${livro.qtdDisponiveis()} + '/' + ${#lists.size(livro.exemplares)}"></td>
+                        <td th:text="${livro.isbn}"></td>
 						<td th:text="${livro.anoPublicacao}"></td>
 						<td th:text="${livro.categoria.nome}"></td>
 						<td>

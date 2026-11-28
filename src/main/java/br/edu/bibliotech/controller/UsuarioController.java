@@ -51,7 +51,7 @@ public class UsuarioController {
 			return "usuario/formulario";
 		}
 
-		return "redirect:/home";
+		return "redirect:/usuario";
 	}
 
 	@GetMapping("/{id}/editar")
@@ -84,12 +84,12 @@ public class UsuarioController {
 			return "usuario/edicao";
 		}
 
-		return "redirect:/home";
+		return "redirect:/usuario";
 	}
 
 	@PostMapping("/{id}/desativar")
 	public String desativar(@PathVariable Long id) {
 		this.usuarioService.desativar(id);
-		return "redirect:/home";
+		return "redirect:/usuario";
 	}
 }

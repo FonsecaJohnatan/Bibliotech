@@ -46,7 +46,7 @@ public class CategoriaController {
 			return "categoria/formulario";
 		}
 
-		return "redirect:/home";
+		return "redirect:/categoria";
 	}
 
 	@GetMapping("/{id}/editar")
@@ -79,6 +79,6 @@ public class CategoriaController {
 			return "categoria/formulario";
 		}
 
-		return "redirect:/home";
+		return "redirect:/categoria";
 	}
 }

@@ -46,7 +46,7 @@ public class AutorController {
 			return "autor/formulario";
 		}
 
-		return "redirect:/home";
+		return "redirect:/autor";
 	}
 
 	@GetMapping("/{id}/editar")
@@ -80,6 +80,6 @@ public class AutorController {
 			return "autor/formulario";
 		}
 
-		return "redirect:/home";
+		return "redirect:/autor";
 	}
 }

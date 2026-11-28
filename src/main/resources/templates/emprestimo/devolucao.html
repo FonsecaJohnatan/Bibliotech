@@ -5,19 +5,22 @@
     <header th:replace="~{base :: header}"></header>
     <main class="formulario">
         <a th:href="@{/emprestimo}">Voltar para empréstimos</a>
-        <h1 th:replace="~{base :: titulo('Devolução')}">Devolução</h1>
-        <p><strong>Usuário:</strong> <span th:text="${emprestimo.usuario.nome}"></span></p>
-        <p><strong>Livro:</strong> <span th:text="${emprestimo.exemplar.livro.titulo}"></span></p>
-        <p><strong>Exemplar:</strong> <span th:text="${emprestimo.exemplar.codigoTombo}"></span></p>
-        <p><strong>Prazo:</strong> <span th:text="${#temporals.format(emprestimo.dataPrevista, 'dd/MM/yyyy')}"></span></p>
-        <p class="sucesso" th:if="${emprestimo.dataDevolucao != null}">Este empréstimo já foi devolvido.</p>
-        <form th:if="${emprestimo.dataDevolucao == null}" th:action="@{/emprestimo/{id}/devolver(id=${emprestimo.id})}" method="post">
-            <p>Confirme a devolução do exemplar. A multa será calculada na data de hoje.</p>
-            <div class="acoes">
-                <button type="submit">Confirmar devolução</button>
-                <a th:href="@{/emprestimo}">Cancelar</a>
-            </div>
-        </form>
+        <section th:fragment="confirmacao(emprestimo, hoje)">
+            <h2>Confirmar devolução</h2>
+            <p><strong>Usuário:</strong> <span th:text="${emprestimo.usuario.nome}"></span></p>
+            <p><strong>Livro:</strong> <span th:text="${emprestimo.exemplar.livro.titulo}"></span></p>
+            <p><strong>Exemplar:</strong> <span th:text="${emprestimo.exemplar.codigoTombo}"></span></p>
+            <p><strong>Prazo:</strong> <span th:text="${#temporals.format(emprestimo.dataPrevista, 'dd/MM/yyyy')}"></span></p>
+            <p><strong>Dias de atraso:</strong> <span th:text="${emprestimo.diasDeAtraso(hoje)}"></span></p>
+            <p><strong>Multa (R$ 1,00 por dia):</strong> <span th:text="${'R$ ' + #numbers.formatDecimal(emprestimo.calcularMulta(emprestimo.dataDevolucao != null ? emprestimo.dataDevolucao : hoje), 1, 'POINT', 2, 'COMMA')}"></span></p>
+            <p class="sucesso" th:if="${emprestimo.dataDevolucao != null}">Este empréstimo já foi devolvido.</p>
+            <form th:if="${emprestimo.dataDevolucao == null}" th:action="@{/emprestimo/{id}/devolver(id=${emprestimo.id})}" method="post">
+                <div class="acoes">
+                    <button type="submit">Confirmar devolução</button>
+                    <a th:href="@{/emprestimo}" data-fechar-dialogo>Cancelar</a>
+                </div>
+            </form>
+        </section>
     </main>
 </body>
 </html>

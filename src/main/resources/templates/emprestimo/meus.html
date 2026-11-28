@@ -4,25 +4,32 @@
 <body>
     <header th:replace="~{base :: header}"></header>
     <main>
-        <h1 th:replace="~{base :: titulo('Meus empréstimos')}">Meus empréstimos</h1>
+        <h1>Meus empréstimos</h1>
+        <p class="erro" role="alert" th:if="${erro != null}" th:text="${erro}"></p>
+        <p class="sucesso" role="status" th:if="${sucesso != null}" th:text="${sucesso}"></p>
         <p class="card" th:if="${#lists.isEmpty(emprestimos)}">Você ainda não possui empréstimos.</p>
         <div class="tabela" th:unless="${#lists.isEmpty(emprestimos)}">
             <table>
                 <caption class="sr-only">Histórico dos meus empréstimos</caption>
-                <thead>
-                    <tr><th scope="col">Livro</th><th scope="col">Exemplar</th><th scope="col">Prazo</th><th scope="col">Situação</th><th scope="col">Multa</th></tr>
-                </thead>
+                <thead><tr><th scope="col">Livro</th><th scope="col">Exemplar</th><th scope="col">Empréstimo</th><th scope="col">Prazo</th><th scope="col">Situação</th><th scope="col">Ações</th></tr></thead>
                 <tbody>
                     <tr th:each="emprestimo : ${emprestimos}">
                         <td th:text="${emprestimo.exemplar.livro.titulo}"></td>
                         <td th:text="${emprestimo.exemplar.codigoTombo}"></td>
+                        <td th:text="${#temporals.format(emprestimo.dataEmprestimo, 'dd/MM/yyyy')}"></td>
                         <td th:text="${#temporals.format(emprestimo.dataPrevista, 'dd/MM/yyyy')}"></td>
-                        <td th:text="${emprestimo.dataDevolucao == null ? 'Em aberto' : 'Devolvido'}"></td>
-                        <td th:text="${emprestimo.dataDevolucao == null ? '—' : 'R$ ' + #numbers.formatDecimal(emprestimo.multa, 1, 'POINT', 2, 'COMMA')}"></td>
+                        <td><span class="situacao" th:classappend="${emprestimo.estaAtrasado(hoje) ? 'atrasado' : ''}" th:text="${emprestimo.situacaoEm(hoje)}"></span></td>
+                        <td>
+                            <form class="acao-tabela" th:if="${emprestimo.podeRenovarEm(hoje)}" th:action="@{/meus-emprestimos/{id}/renovar(id=${emprestimo.id})}" method="post">
+                                <button type="submit" th:aria-label="${'Renovar ' + emprestimo.exemplar.livro.titulo}">Renovar</button>
+                            </form>
+                            <span th:unless="${emprestimo.podeRenovarEm(hoje)}" th:text="${emprestimo.renovado ? 'Já renovado' : '—'}"></span>
+                        </td>
                     </tr>
                 </tbody>
             </table>
         </div>
+        <p class="resumo-multa"><strong>Multa dos empréstimos em atraso:</strong> <span th:text="${'R$ ' + #numbers.formatDecimal(multaPendente, 1, 'POINT', 2, 'COMMA')}"></span></p>
     </main>
 </body>
 </html>

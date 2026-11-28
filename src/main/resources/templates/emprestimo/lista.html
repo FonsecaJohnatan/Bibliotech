@@ -2,61 +2,59 @@
 <html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{base :: head('Empréstimos')}"></head>
 <body>
-	<header th:replace="~{base :: header}"></header>
-	<main th:fragment="lista">
-		<div class="titulo">
-			<h1>Empréstimos</h1>
-			<a class="botao" th:href="@{/emprestimo/formulario}">Novo empréstimo</a>
-		</div>
-		<p class="erro" role="alert" th:if="${erro != null}" th:text="${erro}"></p>
-		<form th:action="@{/emprestimo}" method="get">
-			<div class="campo">
-				<label for="filtroUsuario">Usuário</label>
-				<select id="filtroUsuario" name="usuarioId">
-					<option value="">Todos os usuários</option>
-					<option th:each="usuario : ${usuarios}" th:value="${usuario.id}" th:text="${usuario.nome} + ' — ' + ${usuario.email}" th:selected="${usuario.id == usuarioId}"></option>
-				</select>
-			</div>
-			<button type="submit">Filtrar</button>
-		</form>
-		<p class="card" th:if="${#lists.isEmpty(emprestimos)}">Nenhum empréstimo encontrado.</p>
-		<div class="tabela" th:unless="${#lists.isEmpty(emprestimos)}">
-			<table>
-				<caption class="sr-only">Lista de empréstimos</caption>
-				<thead>
-					<tr>
-						<th scope="col">Usuário</th>
-						<th scope="col">Exemplar</th>
-						<th scope="col">Empréstimo</th>
-						<th scope="col">Prazo</th>
-						<th scope="col">Devolução</th>
-						<th scope="col">Renovado</th>
-						<th scope="col">Multa</th>
-						<th scope="col">Ações</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr th:each="emprestimo : ${emprestimos}">
-						<td th:text="${emprestimo.usuario.nome}"></td>
-						<td th:text="${emprestimo.exemplar.codigoTombo} + ' — ' + ${emprestimo.exemplar.livro.titulo}"></td>
-						<td th:text="${#temporals.format(emprestimo.dataEmprestimo, 'dd/MM/yyyy')}"></td>
-						<td th:text="${#temporals.format(emprestimo.dataPrevista, 'dd/MM/yyyy')}"></td>
-						<td th:text="${emprestimo.dataDevolucao != null ? #temporals.format(emprestimo.dataDevolucao, 'dd/MM/yyyy') : 'Em aberto'}"></td>
-						<td th:text="${emprestimo.renovado ? 'Sim' : 'Não'}"></td>
-						<td th:text="${emprestimo.dataDevolucao != null ? 'R$ ' + #numbers.formatDecimal(emprestimo.multa, 1, 'POINT', 2, 'COMMA') : 'Calculada na devolução'}"></td>
-						<td>
-							<div class="acoes" th:if="${emprestimo.dataDevolucao == null}">
-								<form class="acao-tabela" th:unless="${emprestimo.renovado}" th:action="@{/emprestimo/{id}/renovar(id=${emprestimo.id})}" method="post">
-									<button type="submit" th:aria-label="'Renovar empréstimo de ' + ${emprestimo.exemplar.codigoTombo}">Renovar</button>
-								</form>
-								<a th:href="@{/emprestimo/{id}/devolucao(id=${emprestimo.id})}" th:aria-label="'Devolver ' + ${emprestimo.exemplar.codigoTombo}">Devolver</a>
-							</div>
-							<span th:if="${emprestimo.dataDevolucao != null}">Devolvido</span>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-	</main>
+    <header th:replace="~{base :: header}"></header>
+    <main>
+        <div class="titulo"><h1>Empréstimos</h1><a class="botao" th:href="@{/emprestimo/formulario}">Novo empréstimo</a></div>
+        <p class="erro" role="alert" th:if="${erro != null}" th:text="${erro}"></p>
+        <form class="filtros" th:action="@{/emprestimo}" method="get">
+            <div class="campo">
+                <label for="filtroUsuario">Usuário</label>
+                <select id="filtroUsuario" name="usuarioId">
+                    <option value="">Todos os usuários</option>
+                    <option th:each="usuario : ${usuarios}" th:value="${usuario.id}" th:text="${usuario.nome} + ' — ' + ${usuario.email}" th:selected="${usuario.id == usuarioId}"></option>
+                </select>
+            </div>
+            <div class="campo">
+                <label for="situacao">Situação</label>
+                <select id="situacao" name="situacao">
+                    <option value="">Todas as situações</option>
+                    <option value="ABERTOS" th:selected="${situacao == 'ABERTOS'}">Abertos</option>
+                    <option value="ATRASADOS" th:selected="${situacao == 'ATRASADOS'}">Atrasados</option>
+                    <option value="DEVOLVIDOS" th:selected="${situacao == 'DEVOLVIDOS'}">Devolvidos</option>
+                </select>
+            </div>
+            <button type="submit">Filtrar</button>
+        </form>
+        <p class="card" th:if="${#lists.isEmpty(emprestimos)}">Nenhum empréstimo encontrado.</p>
+        <div class="tabela" th:unless="${#lists.isEmpty(emprestimos)}">
+            <table>
+                <caption class="sr-only">Lista de empréstimos</caption>
+                <thead><tr><th scope="col">Usuário</th><th scope="col">Livro</th><th scope="col">Exemplar</th><th scope="col">Prazo</th><th scope="col">Situação</th><th scope="col">Ações</th></tr></thead>
+                <tbody>
+                    <tr th:each="emprestimo : ${emprestimos}">
+                        <td th:text="${emprestimo.usuario.nome}"></td>
+                        <td th:text="${emprestimo.exemplar.livro.titulo}"></td>
+                        <td th:text="${emprestimo.exemplar.codigoTombo}"></td>
+                        <td th:text="${#temporals.format(emprestimo.dataPrevista, 'dd/MM/yyyy')}"></td>
+                        <td><span class="situacao" th:classappend="${emprestimo.estaAtrasado(hoje) ? 'atrasado' : ''}" th:text="${emprestimo.situacaoEm(hoje)}"></span></td>
+                        <td>
+                            <div class="acoes" th:if="${emprestimo.dataDevolucao == null}">
+                                <form class="acao-tabela" th:if="${emprestimo.podeRenovarEm(hoje)}" th:action="@{/emprestimo/{id}/renovar(id=${emprestimo.id})}" method="post">
+                                    <button type="submit">Renovar</button>
+                                </form>
+                                <a th:href="@{/emprestimo/{id}/devolucao(id=${emprestimo.id})}" th:attr="data-dialogo=${'devolucao-' + emprestimo.id}">Devolver</a>
+                            </div>
+                            <span th:if="${emprestimo.dataDevolucao != null}">Devolvido</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <th:block th:each="emprestimo : ${emprestimos}">
+            <dialog th:if="${emprestimo.dataDevolucao == null}" th:id="${'devolucao-' + emprestimo.id}" aria-label="Confirmar devolução">
+                <section th:replace="~{emprestimo/devolucao :: confirmacao(${emprestimo}, ${hoje})}"></section>
+            </dialog>
+        </th:block>
+    </main>
 </body>
 </html>

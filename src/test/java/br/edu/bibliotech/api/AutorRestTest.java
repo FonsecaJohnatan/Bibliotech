@@ -31,6 +31,9 @@ import jakarta.persistence.EntityNotFoundException;
 @WebMvcTest(AutorRest.class)
 @AutoConfigureMockMvc(addFilters = false)
 class AutorRestTest {
+
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private br.edu.bibliotech.repository.UsuarioRepository usuarios;
 	@Test
 	void deveRetornar404QuandoListaEstaVazia() throws Exception {
 		when(autorService.listar()).thenReturn(List.of());

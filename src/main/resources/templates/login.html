@@ -5,8 +5,9 @@
     <header th:replace="~{base :: header}"></header>
     <main class="formulario">
         <h1 th:replace="~{base :: titulo('Entrar')}">Entrar</h1>
-        <p class="erro" role="alert" th:if="${param.error}">E-mail ou senha inválidos, ou usuário inativo.</p>
-        <p class="sucesso" th:if="${param.logout}">Você saiu do sistema.</p>
+        <p class="erro" role="alert" th:if="${param.error}" th:text="#{login.credenciais.invalidas}">E-mail ou senha inválidos.</p>
+        <p class="erro" role="alert" th:if="${param.inativo}" th:text="#{login.usuario.inativo}">Usuário inativo, procure a biblioteca</p>
+        <p class="sucesso" role="status" th:if="${param.cadastro}" th:text="#{login.cadastro.sucesso}"></p>
         <form th:action="@{/login}" method="post">
             <div class="campo">
                 <label for="email">E-mail</label>
@@ -18,6 +19,7 @@
             </div>
             <button type="submit">Entrar</button>
         </form>
+        <p>Ainda não tem conta? <a th:href="@{/cadastro}">Criar conta</a></p>
     </main>
 </body>
 </html>

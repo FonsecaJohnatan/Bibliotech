@@ -18,6 +18,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -59,6 +60,7 @@ public class Livro {
             inverseJoinColumns = @JoinColumn(name = "autor_id"))
     private Set<Autor> autores = new HashSet<>();
 
+    @BatchSize(size = 50)
     @OneToMany(mappedBy = "livro", cascade = CascadeType.ALL)
     private List<Exemplar> exemplares = new ArrayList<>();
 

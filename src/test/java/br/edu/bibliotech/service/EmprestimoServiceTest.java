@@ -203,7 +203,7 @@ class EmprestimoServiceTest {
         when(emprestimoRepository.save(any(Emprestimo.class)))
                 .thenAnswer(invocacao -> invocacao.getArgument(0));
 
-        Emprestimo renovado = emprestimoService.renovar(30L);
+        Emprestimo renovado = emprestimoService.renovar(30L, LocalDate.of(2026, 10, 10));
 
         assertThat(renovado.getDataPrevista()).isEqualTo(LocalDate.of(2026, 10, 22));
         assertThat(renovado.getRenovado()).isTrue();
@@ -219,7 +219,7 @@ class EmprestimoServiceTest {
 
         when(emprestimoRepository.findById(30L)).thenReturn(Optional.of(emprestimo));
 
-        Throwable erro = catchThrowable(() -> emprestimoService.renovar(30L));
+        Throwable erro = catchThrowable(() -> emprestimoService.renovar(30L, LocalDate.of(2026, 10, 10)));
 
         assertThat(erro).isInstanceOf(IllegalStateException.class);
 
@@ -255,7 +255,7 @@ class EmprestimoServiceTest {
         emprestimo.setRenovado(true);
         when(emprestimoRepository.findById(30L)).thenReturn(Optional.of(emprestimo));
 
-        Throwable erro = catchThrowable(() -> emprestimoService.renovar(30L));
+        Throwable erro = catchThrowable(() -> emprestimoService.renovar(30L, LocalDate.of(2026, 10, 10)));
 
         assertThat(erro).isInstanceOf(IllegalStateException.class);
 

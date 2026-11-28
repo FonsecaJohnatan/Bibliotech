@@ -1,26 +1,30 @@
 package br.edu.bibliotech.controller;
 
-import org.springframework.security.core.Authentication;
+import br.edu.bibliotech.dto.UsuarioLogado;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.SessionAttribute;
 
 @ControllerAdvice(basePackageClasses = HomeController.class)
 public class MenuControllerAdvice {
 
+    @ModelAttribute("administrador")
+    public boolean administrador(@SessionAttribute(name = "usuarioLogado", required = false) UsuarioLogado usuario) {
+        return usuario != null && usuario.administrador();
+    }
+
+    @ModelAttribute("nomeUsuario")
+    public String nomeUsuario(@SessionAttribute(name = "usuarioLogado", required = false) UsuarioLogado usuario) {
+        return usuario == null ? "" : usuario.nome();
+    }
+
     @ModelAttribute("autenticado")
-    public boolean autenticado(Authentication autenticacao) {
-        return autenticacao != null && autenticacao.isAuthenticated()
-                && !"anonymousUser".equals(autenticacao.getPrincipal());
+    public boolean autenticado(@SessionAttribute(name = "usuarioLogado", required = false) UsuarioLogado usuario) {
+        return usuario != null;
     }
 
     @ModelAttribute("podeGerenciar")
-    public boolean podeGerenciar(Authentication autenticacao) {
-        if (!autenticado(autenticacao)) {
-            return false;
-        }
-
-        return autenticacao.getAuthorities().stream()
-                .anyMatch(permissao -> permissao.getAuthority().equals("ROLE_ADMIN")
-                        || permissao.getAuthority().equals("ROLE_BIBLIOTECARIO"));
+    public boolean podeGerenciar(@SessionAttribute(name = "usuarioLogado", required = false) UsuarioLogado usuario) {
+        return usuario != null && usuario.podeGerenciar();
     }
 }

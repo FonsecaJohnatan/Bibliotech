@@ -80,4 +80,25 @@ public class Emprestimo {
         }
         return MULTA_POR_DIA.multiply(BigDecimal.valueOf(diasAtraso));
     }
+
+    public boolean estaAtrasado(LocalDate hoje) {
+        return dataDevolucao == null && dataPrevista.isBefore(hoje);
+    }
+
+    public boolean podeRenovarEm(LocalDate hoje) {
+        return dataDevolucao == null && !Boolean.TRUE.equals(renovado) && !estaAtrasado(hoje);
+    }
+
+    public String situacaoEm(LocalDate hoje) {
+        if (dataDevolucao != null) {
+            return "Devolvido";
+        }
+
+        return estaAtrasado(hoje) ? "Atrasado" : "Em dia";
+    }
+
+    public long diasDeAtraso(LocalDate hoje) {
+        LocalDate referencia = dataDevolucao == null ? hoje : dataDevolucao;
+        return Math.max(0, ChronoUnit.DAYS.between(dataPrevista, referencia));
+    }
 }

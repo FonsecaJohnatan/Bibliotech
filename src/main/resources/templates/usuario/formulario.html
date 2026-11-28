@@ -34,7 +34,10 @@
 				</select>
 				<small id="perfil-erro" class="erro-campo" th:if="${#fields.hasErrors('perfil')}" th:errors="*{perfil}"></small>
 			</div>
-			<div class="acoes">
+            <div class="campo">
+                <label class="checkbox" for="ativo"><input id="ativo" type="checkbox" th:field="*{ativo}"> Usuário ativo</label>
+            </div>
+            <div class="acoes">
 				<button type="submit">Salvar</button>
 				<a th:href="@{/usuario}">Cancelar</a>
 			</div>

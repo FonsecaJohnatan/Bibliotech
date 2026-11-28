@@ -71,7 +71,7 @@ public class LivroController {
 			return "livro/formulario";
 		}
 
-		return "redirect:/home";
+		return "redirect:/livro";
 	}
 
 	@GetMapping("/{id}/editar")
@@ -113,7 +113,7 @@ public class LivroController {
 			return "livro/formulario";
 		}
 
-		return "redirect:/home";
+		return "redirect:/livro";
 	}
 
 	private void carregarOpcoes(Model model) {

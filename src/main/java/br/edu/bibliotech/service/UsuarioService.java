@@ -36,8 +36,22 @@ public class UsuarioService {
 
         String senhaCriptografada = passwordEncoder.encode(senha);
         Usuario usuario = new Usuario(nome, email, senhaCriptografada, perfil);
+        usuario.setAtivo(Boolean.TRUE.equals(dados.getAtivo()));
 
         return usuarioRepository.save(usuario);
+    }
+
+    public Usuario autenticar(String email, String senha) {
+        if (email == null || senha == null || senha.isBlank()) {
+            return null;
+        }
+
+        Usuario usuario = usuarioRepository.findByEmail(normalizarEmail(email.strip())).orElse(null);
+        if (usuario == null || !passwordEncoder.matches(senha, usuario.getSenha())) {
+            return null;
+        }
+
+        return usuario;
     }
 
     public Usuario buscarPorId(Long id) {

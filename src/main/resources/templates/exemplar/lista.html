@@ -9,7 +9,7 @@
 			<a class="botao" th:href="@{/exemplar/formulario}">Novo exemplar</a>
 		</div>
 		<p class="erro" role="alert" th:if="${erro != null}" th:text="${erro}"></p>
-		<form th:action="@{/exemplar}" method="get">
+		<form class="filtros" th:action="@{/exemplar}" method="get">
 			<div class="campo">
 				<label for="filtroLivro">Livro</label>
 				<select id="filtroLivro" name="livroId">
@@ -17,7 +17,14 @@
 					<option th:each="livro : ${livros}" th:value="${livro.id}" th:text="${livro.titulo} + ' — ' + ${livro.isbn}" th:selected="${livro.id == livroId}"></option>
 				</select>
 			</div>
-			<button type="submit">Filtrar</button>
+            <div class="campo">
+                <label for="filtroStatus">Status</label>
+                <select id="filtroStatus" name="status">
+                    <option value="">Todos os status</option>
+                    <option th:each="opcao : ${statusExemplares}" th:value="${opcao}" th:text="${#messages.msg('statusExemplar.' + opcao)}" th:selected="${opcao == status}"></option>
+                </select>
+            </div>
+            <button type="submit">Filtrar</button>
 		</form>
 		<p class="card" th:if="${#lists.isEmpty(exemplares)}">Nenhum exemplar encontrado.</p>
 		<div class="tabela" th:unless="${#lists.isEmpty(exemplares)}">

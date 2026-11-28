@@ -1,5 +1,6 @@
 package br.edu.bibliotech.service;
 
+import java.util.Locale;
 import br.edu.bibliotech.model.Autor;
 import br.edu.bibliotech.model.Categoria;
 import br.edu.bibliotech.model.Livro;
@@ -7,6 +8,7 @@ import br.edu.bibliotech.repository.AutorRepository;
 import br.edu.bibliotech.repository.CategoriaRepository;
 import br.edu.bibliotech.repository.LivroRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,13 +50,21 @@ public class LivroService {
         return livroRepository.save(livro);
     }
 
+    @Transactional(readOnly = true)
     public Livro buscarPorId(Long id) {
-        return livroRepository.findById(id)
+        Livro livro = livroRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Livro não encontrado: " + id));
+
+        Hibernate.initialize(livro.getExemplares());
+        return livro;
     }
 
+    @Transactional(readOnly = true)
     public List<Livro> listar() {
-        return livroRepository.findAll();
+        List<Livro> livros = livroRepository.findAll();
+        livros.forEach(livro -> Hibernate.initialize(livro.getExemplares()));
+
+        return livros;
     }
 
     @Transactional
@@ -73,6 +83,7 @@ public class LivroService {
         return livroRepository.save(livro);
     }
 
+    @Transactional
     public void excluir(Long id) {
         Livro livro = buscarPorId(id);
         livroRepository.delete(livro);
@@ -183,5 +194,30 @@ public class LivroService {
 
         return autorRepository.findById(autorId)
                 .orElseThrow(() -> new EntityNotFoundException("Autor não encontrado: " + autorId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Livro> pesquisar(String busca, Long categoriaId, boolean somenteDisponiveis) {
+        String termo = busca == null ? "" : busca.strip().toLowerCase(Locale.ROOT);
+
+        return listar().stream()
+                .filter(livro -> correspondeABusca(livro, termo))
+                .filter(livro -> categoriaId == null || categoriaId.equals(livro.getCategoria().getId()))
+                .filter(livro -> !somenteDisponiveis || livro.qtdDisponiveis() > 0)
+                .toList();
+    }
+
+    private boolean correspondeABusca(Livro livro, String termo) {
+        if (termo.isBlank()) {
+            return true;
+        }
+
+        boolean tituloEncontrado = livro.getTitulo().toLowerCase(Locale.ROOT).contains(termo);
+        String isbnBuscado = termo.replaceAll("[\\s-]", "");
+        boolean isbnEncontrado = !isbnBuscado.isBlank() && livro.getIsbn().contains(isbnBuscado);
+        boolean autorEncontrado = livro.getAutores().stream()
+                .anyMatch(autor -> autor.getNome().toLowerCase(Locale.ROOT).contains(termo));
+
+        return tituloEncontrado || isbnEncontrado || autorEncontrado;
     }
 }

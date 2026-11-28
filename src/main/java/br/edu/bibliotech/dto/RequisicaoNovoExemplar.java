@@ -2,6 +2,7 @@ package br.edu.bibliotech.dto;
 
 import br.edu.bibliotech.model.Exemplar;
 import br.edu.bibliotech.model.Livro;
+import br.edu.bibliotech.model.StatusExemplar;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -16,6 +17,8 @@ public class RequisicaoNovoExemplar {
 	@NotNull(message = "{validacao.exemplar.livro.obrigatorio}")
 	@Positive(message = "{validacao.exemplar.livro.invalido}")
 	private Long livroId;
+
+    private StatusExemplar status;
 
 	public String getCodigoTombo() {
 		return codigoTombo;
@@ -43,4 +46,13 @@ public class RequisicaoNovoExemplar {
 
 		return exemplar;
 	}
+
+    public StatusExemplar getStatus() {
+        return status;
+    }
+
+    public void setStatus(StatusExemplar status) {
+        this.status = status;
+    }
+
 }

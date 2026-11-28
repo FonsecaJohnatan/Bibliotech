@@ -28,7 +28,16 @@
 				</select>
 				<small id="livro-erro" class="erro-campo" th:if="${#fields.hasErrors('livroId')}" th:errors="*{livroId}"></small>
 			</div>
-			<div class="acoes">
+            <div class="campo">
+                <label for="status">Status</label>
+                <select id="status" th:field="*{status}" th:errorclass="invalido">
+                    <option value="" th:text="${id != null ? 'Manter status atual' : 'Disponível'}"></option>
+                    <option th:each="opcao : ${statusExemplares}" th:if="${opcao.name() != 'EMPRESTADO' or requisicaoNovoExemplar.status == opcao}" th:value="${opcao}" th:text="${#messages.msg('statusExemplar.' + opcao)}"></option>
+                </select>
+                <small>O status Emprestado é controlado pelo empréstimo e pela devolução.</small>
+                <small class="erro-campo" th:if="${#fields.hasErrors('status')}" th:errors="*{status}"></small>
+            </div>
+            <div class="acoes">
 				<button type="submit" th:disabled="${#lists.isEmpty(livros)}">Salvar</button>
 				<a th:href="@{/exemplar}">Cancelar</a>
 			</div>

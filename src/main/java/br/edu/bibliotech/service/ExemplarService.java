@@ -169,4 +169,36 @@ public class ExemplarService {
 
         return livro.getId();
     }
+
+    @Transactional
+    public Exemplar cadastrar(Exemplar dados, StatusExemplar status) {
+        if (status == StatusExemplar.EMPRESTADO) {
+            throw new IllegalArgumentException("O status Emprestado é definido pelo registro de um empréstimo");
+        }
+
+        Exemplar exemplar = cadastrar(dados);
+        if (status != null) {
+            exemplar.setStatus(status);
+        }
+        return exemplar;
+    }
+
+    @Transactional
+    public Exemplar atualizar(Long id, Exemplar dados, StatusExemplar status) {
+        Exemplar exemplar = buscarPorId(id);
+        boolean mudancaDeStatus = status != null && status != exemplar.getStatus();
+        boolean envolveEmprestimo = status == StatusExemplar.EMPRESTADO
+                || exemplar.getStatus() == StatusExemplar.EMPRESTADO;
+
+        if (mudancaDeStatus && envolveEmprestimo) {
+            throw new IllegalStateException("Registre o empréstimo ou a devolução para alterar o status Emprestado");
+        }
+
+        Exemplar atualizado = atualizar(id, dados);
+        if (status != null) {
+            atualizado.setStatus(status);
+        }
+        return atualizado;
+    }
+
 }

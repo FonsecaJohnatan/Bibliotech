@@ -24,6 +24,8 @@ public class RequisicaoNovoUsuario {
 	@NotNull(message = "{validacao.usuario.perfil.obrigatorio}")
 	private Perfil perfil;
 
+    private boolean ativo = true;
+
 	public String getNome() {
 		return nome;
 	}
@@ -62,6 +64,16 @@ public class RequisicaoNovoUsuario {
 		usuario.setEmail(this.email);
 		usuario.setSenha(this.senha);
 		usuario.setPerfil(this.perfil);
+        usuario.setAtivo(this.ativo);
 		return usuario;
 	}
+
+    public boolean isAtivo() {
+        return ativo;
+    }
+
+    public void setAtivo(boolean ativo) {
+        this.ativo = ativo;
+    }
+
 }

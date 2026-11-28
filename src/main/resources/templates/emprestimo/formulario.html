@@ -8,17 +8,19 @@
 		<h1>Novo empréstimo</h1>
 		<p>Selecione o usuário e o exemplar. O empréstimo será registrado com a data de hoje.</p>
 		<p class="erro" th:if="${#lists.isEmpty(usuarios)}">
-			Nenhum usuário ativo disponível. <a th:href="@{/usuario/formulario}">Cadastrar usuário</a>.
+			Nenhum usuário cadastrado.
 		</p>
 		<p class="erro" th:if="${#lists.isEmpty(exemplares)}">
 			Nenhum exemplar disponível. <a th:href="@{/exemplar}">Ver exemplares</a>.
 		</p>
-		<form th:object="${requisicaoNovoEmprestimo}" th:action="@{/emprestimo/novo}" method="post">
+		<form id="novo-emprestimo" th:attr="data-verificacao-url=@{/emprestimo/verificar}" th:object="${requisicaoNovoEmprestimo}" th:action="@{/emprestimo/novo}" method="post">
 			<div class="erro" role="alert" th:if="${#fields.hasGlobalErrors()}">
 				<p th:each="erro : ${#fields.globalErrors()}" th:text="${erro}"></p>
 			</div>
 			<div class="campo">
-				<label for="usuarioId">Usuário</label>
+				<label for="buscaUsuario">Buscar usuário por nome ou e-mail</label>
+                <input id="buscaUsuario" type="search" data-filtrar-select="usuarioId" placeholder="Digite o nome ou e-mail">
+                <label for="usuarioId">Usuário</label>
 				<select id="usuarioId" th:field="*{usuarioId}" required th:errorclass="invalido" aria-describedby="usuario-erro">
 					<option value="">Selecione um usuário</option>
 					<option th:each="usuario : ${usuarios}" th:value="${usuario.id}" th:text="${usuario.nome} + ' — ' + ${usuario.email}"></option>
@@ -26,15 +28,29 @@
 				<small id="usuario-erro" class="erro-campo" th:if="${#fields.hasErrors('usuarioId')}" th:errors="*{usuarioId}"></small>
 			</div>
 			<div class="campo">
-				<label for="exemplarId">Exemplar</label>
+				<label for="buscaExemplar">Buscar exemplar por código ou título</label>
+                <input id="buscaExemplar" type="search" data-filtrar-select="exemplarId" placeholder="Digite o código ou título">
+                <label for="exemplarId">Exemplar disponível</label>
 				<select id="exemplarId" th:field="*{exemplarId}" required th:errorclass="invalido" aria-describedby="exemplar-erro">
 					<option value="">Selecione um exemplar</option>
 					<option th:each="exemplar : ${exemplares}" th:value="${exemplar.id}" th:text="${exemplar.codigoTombo} + ' — ' + ${exemplar.livro.titulo}"></option>
 				</select>
 				<small id="exemplar-erro" class="erro-campo" th:if="${#fields.hasErrors('exemplarId')}" th:errors="*{exemplarId}"></small>
 			</div>
-			<div class="acoes">
-				<button type="submit" th:disabled="${#lists.isEmpty(usuarios) or #lists.isEmpty(exemplares)}">Salvar</button>
+            <p><strong>Data prevista:</strong> <span th:text="${#temporals.format(dataPrevista, 'dd/MM/yyyy')}"></span> (14 dias)</p>
+            <fieldset class="verificacao" aria-live="polite">
+                <legend>Verificação do usuário</legend>
+                <p id="verificacao-aviso" th:text="${verificacao == null ? 'Selecione um usuário para verificar as condições.' : 'Condições para realizar o empréstimo:'}"></p>
+                <ul>
+                    <li data-condicao="usuarioAtivo" th:classappend="${verificacao == null ? '' : (verificacao.usuarioAtivo() ? 'condicao-ok' : 'condicao-erro')}">Usuário ativo</li>
+                    <li data-condicao="semMulta" th:classappend="${verificacao == null ? '' : (verificacao.semMulta() ? 'condicao-ok' : 'condicao-erro')}">Sem multa de empréstimos em atraso</li>
+                    <li data-condicao="semAtraso" th:classappend="${verificacao == null ? '' : (verificacao.semAtraso() ? 'condicao-ok' : 'condicao-erro')}">Sem empréstimos atrasados</li>
+                    <li data-condicao="abaixoDoLimite" th:classappend="${verificacao == null ? '' : (verificacao.abaixoDoLimite() ? 'condicao-ok' : 'condicao-erro')}">Menos de 3 empréstimos ativos</li>
+                </ul>
+            </fieldset>
+            <div class="acoes">
+				<button id="confirmar-emprestimo" type="submit" th:disabled="${!podeConfirmar}">Confirmar empréstimo</button>
+                <button class="secundario" type="submit" th:formaction="@{/emprestimo/formulario}" formmethod="get" formnovalidate>Verificar seleção</button>
 				<a th:href="@{/emprestimo}">Cancelar</a>
 			</div>
 		</form>

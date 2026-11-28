@@ -1,45 +1,46 @@
 <!DOCTYPE html>
 <html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{base :: head('Início')}"></head>
+<head th:replace="~{base :: head('Catálogo')}"></head>
 <body>
-	<header th:replace="~{base :: header}"></header>
-	<main>
-		<p class="legenda">Biblioteca comunitária</p>
-		<h1>Bem-vindo ao BiblioTech</h1>
-		<p>Consulte os livros e acompanhe os empréstimos da biblioteca.</p>
-		<div class="cards">
-			<section class="card" th:if="${podeGerenciar}">
-				<h2>Empréstimos</h2>
-				<p>Registre empréstimos, renovações e devoluções.</p>
-				<a class="botao" th:href="@{/emprestimo}">Ver empréstimos</a>
-			</section>
-			<section class="card" th:if="${podeGerenciar}">
-				<h2>Exemplares</h2>
-				<p>Consulte os exemplares e sua disponibilidade.</p>
-				<a class="botao" th:href="@{/exemplar}">Ver exemplares</a>
-			</section>
-			<section class="card" th:if="${podeGerenciar}">
-				<h2>Usuários</h2>
-				<p>Consulte e cadastre os usuários da biblioteca.</p>
-				<a class="botao" th:href="@{/usuario}">Ver usuários</a>
-			</section>
-			<section class="card">
-				<h2>Livros</h2>
-				<p>Consulte os livros do acervo e sua disponibilidade.</p>
-				<a class="botao" th:href="@{/livro}">Ver livros</a>
-			</section>
-			<section class="card" th:if="${podeGerenciar}">
-				<h2>Autores</h2>
-				<p>Consulte e cadastre os autores dos livros.</p>
-				<a class="botao" th:href="@{/autor}">Ver autores</a>
-			</section>
-			<section class="card" th:if="${podeGerenciar}">
-				<h2>Categorias</h2>
-				<p>Organize os livros por assunto ou gênero.</p>
-				<a class="botao" th:href="@{/categoria}">Ver categorias</a>
-			</section>
-		</div>
-	</main>
-	<section th:replace="~{livro/lista :: lista}"></section>
+    <header th:replace="~{base :: header}"></header>
+    <main>
+        <p class="legenda">Biblioteca comunitária</p>
+        <h1>Catálogo</h1>
+        <p>Encontre sua próxima leitura no acervo.</p>
+        <form class="filtros" th:action="@{/home}" method="get">
+            <div class="campo">
+                <label for="busca">Título, autor ou ISBN</label>
+                <input id="busca" name="busca" type="search" th:value="${busca}" placeholder="O que você quer ler?">
+            </div>
+            <div class="campo">
+                <label for="categoriaId">Categoria</label>
+                <select id="categoriaId" name="categoriaId">
+                    <option value="">Todas as categorias</option>
+                    <option th:each="categoria : ${categorias}" th:value="${categoria.id}" th:text="${categoria.nome}" th:selected="${categoria.id == categoriaId}"></option>
+                </select>
+            </div>
+            <label class="checkbox"><input type="checkbox" name="disponiveis" value="true" th:checked="${disponiveis}"> Só disponíveis</label>
+            <button type="submit">Buscar</button>
+            <a th:href="@{/home}">Limpar filtros</a>
+        </form>
+        <p class="card" th:if="${#lists.isEmpty(livros)}">Nenhum livro encontrado para esses filtros.</p>
+        <div class="catalogo">
+            <article class="card livro-card" th:each="livro : ${livros}">
+                <p class="legenda"><strong>Categoria:</strong> <span th:text="${livro.categoria.nome}"></span></p>
+                <h2 th:text="${livro.titulo}"></h2>
+                <p>
+                    <strong>Autor:</strong>
+                    <span th:if="${#sets.isEmpty(livro.autores)}">Não informado</span>
+                    <span th:each="autor, posicao : ${livro.autores}" th:text="${autor.nome} + ${posicao.last ? '' : ', '}"></span>
+                </p>
+                <p><strong>Ano:</strong> <span th:text="${livro.anoPublicacao != null ? livro.anoPublicacao : 'Não informado'}"></span></p>
+                <p class="disponibilidade" th:classappend="${livro.qtdDisponiveis() == 0 ? 'sem-estoque' : ''}">
+                    <strong>Disponibilidade:</strong>
+                    <span th:text="${livro.qtdDisponiveis() > 0 ? livro.qtdDisponiveis() + ' de ' + #lists.size(livro.exemplares) + ' disponíveis' : 'Indisponível'}"></span>
+                </p>
+                <a class="botao" th:href="@{/livro/{id}(id=${livro.id})}" th:aria-label="'Ver ' + ${livro.titulo}">Ver</a>
+            </article>
+        </div>
+    </main>
 </body>
 </html>
