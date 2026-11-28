@@ -39,7 +39,7 @@ public class AutorController {
 		}
 
 		try {
-			Autor autor = requisicao.toAutor();
+			Autor autor = requisicao.toEntidade();
 			this.autorService.cadastrar(autor);
 		} catch (IllegalArgumentException exception) {
 			result.reject("cadastro", exception.getMessage());
@@ -73,7 +73,7 @@ public class AutorController {
 		}
 
 		try {
-			Autor autor = requisicao.toAutor();
+			Autor autor = requisicao.toEntidade();
 			this.autorService.atualizar(id, autor);
 		} catch (IllegalArgumentException exception) {
 			result.reject("atualizacao", exception.getMessage());

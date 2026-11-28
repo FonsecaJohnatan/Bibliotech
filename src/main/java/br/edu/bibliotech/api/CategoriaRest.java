@@ -1,11 +1,11 @@
 package br.edu.bibliotech.api;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,6 +37,10 @@ public class CategoriaRest {
 			resposta.add(CategoriaResposta.fromCategoria(categoria));
 		}
 
+		if (resposta.isEmpty()) {
+			return ResponseEntity.notFound().build();
+		}
+
 		return ResponseEntity.ok(resposta);
 	}
 
@@ -48,16 +52,15 @@ public class CategoriaRest {
 
 	@PostMapping
 	public ResponseEntity<CategoriaResposta> cadastrar(@Valid @RequestBody RequisicaoNovaCategoria requisicao) {
-		Categoria categoria = categoriaService.cadastrar(requisicao.toCategoria());
+		Categoria categoria = categoriaService.cadastrar(requisicao.toEntidade());
 		CategoriaResposta resposta = CategoriaResposta.fromCategoria(categoria);
-		URI uri = URI.create("/service/categorias/" + categoria.getId());
 
-		return ResponseEntity.created(uri).body(resposta);
+		return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
 	}
 
 	@PutMapping("/{id}")
 	public ResponseEntity<CategoriaResposta> atualizar(@PathVariable Long id, @Valid @RequestBody RequisicaoNovaCategoria requisicao) {
-		Categoria categoria = categoriaService.atualizar(id, requisicao.toCategoria());
+		Categoria categoria = categoriaService.atualizar(id, requisicao.toEntidade());
 		return ResponseEntity.ok(CategoriaResposta.fromCategoria(categoria));
 	}
 

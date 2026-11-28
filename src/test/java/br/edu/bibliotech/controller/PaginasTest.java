@@ -26,7 +26,7 @@ import br.edu.bibliotech.repository.AutorRepository;
 import br.edu.bibliotech.repository.CategoriaRepository;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @Transactional
 class PaginasTest {
 
@@ -40,17 +40,16 @@ class PaginasTest {
 	private CategoriaRepository categoriaRepository;
 
 	@Test
-	public void testHome() throws Exception {
+	public void deveAbrirCatalogoInicial() throws Exception {
 		mockMvc.perform(get("/"))
 			.andExpect(status().isOk())
 			.andExpect(content().string(containsString("Bem-vindo ao BiblioTech")))
-			.andExpect(content().string(containsString("href=\"/autor\"")))
-			.andExpect(content().string(containsString("href=\"/categoria\"")));
+			.andExpect(content().string(containsString("href=\"/livro\"")));
 	}
 
 	@ParameterizedTest
 	@CsvSource({"autores, autor", "categorias, categoria"})
-	public void testFormulario(String rota, String pasta) throws Exception {
+	public void deveAbrirFormularioDeCadastro(String rota, String pasta) throws Exception {
 		mockMvc.perform(get("/" + pasta + "/formulario"))
 			.andExpect(status().isOk())
 			.andExpect(view().name(pasta + "/formulario"))
@@ -60,7 +59,7 @@ class PaginasTest {
 
 	@ParameterizedTest
 	@CsvSource({"autores, autor", "categorias, categoria"})
-	public void testSave(String rota, String pasta) throws Exception {
+	public void deveCadastrarRecursoValido(String rota, String pasta) throws Exception {
 		mockMvc.perform(post("/" + pasta + "/novo").param("nome", "Cadastro MVC"))
 			.andExpect(status().is3xxRedirection())
 			.andExpect(redirectedUrl("/home"));
@@ -78,7 +77,7 @@ class PaginasTest {
 
 	@ParameterizedTest
 	@CsvSource({"autores, autor", "categorias, categoria"})
-	public void testSaveSemNome(String rota, String pasta) throws Exception {
+	public void deveReexibirFormularioQuandoNomeVazio(String rota, String pasta) throws Exception {
 		mockMvc.perform(post("/" + pasta + "/novo").param("nome", " "))
 			.andExpect(status().isOk())
 			.andExpect(view().name(pasta + "/formulario"))
@@ -88,7 +87,7 @@ class PaginasTest {
 
 	@ParameterizedTest
 	@CsvSource({"autores, autor", "categorias, categoria"})
-	public void testUpdate(String rota, String pasta) throws Exception {
+	public void deveAtualizarRecurso(String rota, String pasta) throws Exception {
 		Long id = salvar(rota);
 
 		mockMvc.perform(get("/" + pasta + "/" + id + "/editar"))
@@ -112,7 +111,7 @@ class PaginasTest {
 
 	@ParameterizedTest
 	@CsvSource({"autores, autor", "categorias, categoria"})
-	public void testFindByIdInexistente(String rota, String pasta) throws Exception {
+	public void deveRetornar404QuandoRecursoNaoExiste(String rota, String pasta) throws Exception {
 		mockMvc.perform(get("/" + pasta + "/999999/editar"))
 			.andExpect(status().isNotFound())
 			.andExpect(view().name("erro"))
@@ -128,7 +127,7 @@ class PaginasTest {
 	}
 
 	@Test
-	public void testCategoriaDuplicada() throws Exception {
+	public void deveRejeitarCategoriaDuplicada() throws Exception {
 		Long id = salvar("categorias");
 		categoriaRepository.save(new Categoria("Outra categoria", null));
 
@@ -144,7 +143,7 @@ class PaginasTest {
 	}
 
 	@Test
-	public void testDataNascimento() throws Exception {
+	public void deveAceitarDataDeNascimento() throws Exception {
 		mockMvc.perform(post("/autor/novo").param("nome", "Machado de Assis")
 				.param("dataNascimento", "1839-06-21"))
 			.andExpect(redirectedUrl("/home"));
@@ -162,7 +161,7 @@ class PaginasTest {
 	}
 
 	@Test
-	public void testNomeComHtml() throws Exception {
+	public void deveEscaparHtmlNoNome() throws Exception {
 		autorRepository.save(new Autor("<script>alert(1)</script>", null, null));
 
 		mockMvc.perform(get("/autor"))

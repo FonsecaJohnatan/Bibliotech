@@ -10,11 +10,11 @@ import jakarta.validation.constraints.Size;
 
 public class RequisicaoNovoAutor {
 
-	@NotBlank(message = "O nome do autor é obrigatório")
-	@Size(max = 120, message = "O nome do autor deve ter no máximo 120 caracteres")
+	@NotBlank(message = "{validacao.autor.nome.obrigatorio}")
+	@Size(max = 120, message = "{validacao.autor.nome.tamanho}")
 	private String nome;
 
-	@Size(max = 60, message = "A nacionalidade deve ter no máximo 60 caracteres")
+	@Size(max = 60, message = "{validacao.autor.nacionalidade.tamanho}")
 	private String nacionalidade;
 
 	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -44,7 +44,7 @@ public class RequisicaoNovoAutor {
 		this.dataNascimento = dataNascimento;
 	}
 
-	public Autor toAutor() {
+	public Autor toEntidade() {
 		Autor autor = new Autor();
 		autor.setNome(this.nome);
 		autor.setNacionalidade(this.nacionalidade);

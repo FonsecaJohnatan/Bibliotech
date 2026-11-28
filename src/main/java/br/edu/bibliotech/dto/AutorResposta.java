@@ -45,10 +45,12 @@ public class AutorResposta {
 
 	public static AutorResposta fromAutor(Autor autor) {
 		AutorResposta resposta = new AutorResposta();
+
 		resposta.setId(autor.getId());
 		resposta.setNome(autor.getNome());
 		resposta.setNacionalidade(autor.getNacionalidade());
 		resposta.setDataNascimento(autor.getDataNascimento());
+		
 		return resposta;
 	}
 }

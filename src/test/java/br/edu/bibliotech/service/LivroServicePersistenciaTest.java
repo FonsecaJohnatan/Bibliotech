@@ -20,14 +20,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Import(LivroService.class)
 class LivroServicePersistenciaTest {
 
-    @Autowired private LivroService livroService;
-    @Autowired private LivroRepository livroRepository;
-    @Autowired private CategoriaRepository categoriaRepository;
-    @Autowired private AutorRepository autorRepository;
+    @Autowired
+    private LivroService livroService;
+    @Autowired
+    private LivroRepository livroRepository;
+    @Autowired
+    private CategoriaRepository categoriaRepository;
+    @Autowired
+    private AutorRepository autorRepository;
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    void atualizaRelacionamentosMesmoComLivroCarregadoForaDeTransacao() {
+    void deveAtualizarRelacionamentosForaDaTransacaoDeLeitura() {
         Categoria romance = categoriaRepository.save(new Categoria("Romance", null));
         Autor primeiroAutor = autorRepository.save(new Autor("Primeiro autor", null, null));
         Livro dados = new Livro("Livro original", "9780110002224", 2000, romance);
@@ -44,9 +48,8 @@ class LivroServicePersistenciaTest {
         Livro persistido = livroRepository.findByIsbn("9780110002231").orElseThrow();
         assertThat(persistido.getTitulo()).isEqualTo("Livro atualizado");
         assertThat(persistido.getCategoria().getId()).isEqualTo(ciencia.getId());
-        assertThat(livroRepository.findByAutoresId(segundoAutor.getId(), PageRequest.of(0, 10)))
-                .extracting(Livro::getId).contains(salvo.getId());
-        assertThat(livroRepository.findByAutoresId(primeiroAutor.getId(), PageRequest.of(0, 10)))
-                .isEmpty();
+        assertThat(livroRepository.findByAutoresId(segundoAutor.getId(), PageRequest.of(0, 10))).extracting(Livro::getId).contains(salvo.getId());
+        assertThat(livroRepository.findByAutoresId(primeiroAutor.getId(), PageRequest.of(0, 10))).isEmpty();
     }
+
 }

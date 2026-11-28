@@ -38,7 +38,6 @@ public class Emprestimo {
     @Column(name = "data_prevista", nullable = false)
     private LocalDate dataPrevista;
 
-    /** Nulo enquanto o livro não foi devolvido. */
     @Column(name = "data_devolucao")
     private LocalDate dataDevolucao;
 
@@ -63,7 +62,6 @@ public class Emprestimo {
         this.dataPrevista = dataEmprestimo.plusDays(PRAZO_DIAS);
     }
 
-    /** Prorroga o prazo em 7 dias, uma única vez (RF10). */
     public void renovar() {
         if (Boolean.TRUE.equals(renovado)) {
             throw new IllegalStateException("Empréstimo já foi renovado uma vez");
@@ -75,7 +73,6 @@ public class Emprestimo {
         this.renovado = true;
     }
 
-    /** Multa de R$ 1,00 por dia de atraso em relação à data prevista (RF09). */
     public BigDecimal calcularMulta(LocalDate dataReferencia) {
         long diasAtraso = ChronoUnit.DAYS.between(dataPrevista, dataReferencia);
         if (diasAtraso <= 0) {

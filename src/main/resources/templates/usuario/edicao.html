@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{base :: head('Editar usuário')}"></head>
+<body>
+	<header th:replace="~{base :: header}"></header>
+	<main class="formulario">
+		<a th:href="@{/usuario}">Voltar para usuários</a>
+		<h1>Editar usuário</h1>
+		<p>Atualize o nome e o e-mail do usuário.</p>
+		<form th:object="${requisicaoAtualizarUsuario}" th:action="@{/usuario/{id}(id=${id})}" method="post">
+			<div class="erro" role="alert" th:if="${#fields.hasGlobalErrors()}">
+				<p th:each="erro : ${#fields.globalErrors()}" th:text="${erro}"></p>
+			</div>
+			<div class="campo">
+				<label for="nome">Nome</label>
+				<input id="nome" type="text" th:field="*{nome}" maxlength="120" required th:errorclass="invalido" aria-describedby="nome-erro">
+				<small id="nome-erro" class="erro-campo" th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}"></small>
+			</div>
+			<div class="campo">
+				<label for="email">E-mail</label>
+				<input id="email" type="email" th:field="*{email}" maxlength="150" required th:errorclass="invalido" aria-describedby="email-erro">
+				<small id="email-erro" class="erro-campo" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></small>
+			</div>
+			<div class="acoes">
+				<button type="submit">Salvar</button>
+				<a th:href="@{/usuario}">Cancelar</a>
+			</div>
+		</form>
+	</main>
+</body>
+</html>

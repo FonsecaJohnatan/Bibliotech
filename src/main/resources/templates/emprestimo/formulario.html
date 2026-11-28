@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{base :: head('Novo empréstimo')}"></head>
+<body>
+	<header th:replace="~{base :: header}"></header>
+	<main class="formulario">
+		<a th:href="@{/emprestimo}">Voltar para empréstimos</a>
+		<h1>Novo empréstimo</h1>
+		<p>Selecione o usuário e o exemplar. O empréstimo será registrado com a data de hoje.</p>
+		<p class="erro" th:if="${#lists.isEmpty(usuarios)}">
+			Nenhum usuário ativo disponível. <a th:href="@{/usuario/formulario}">Cadastrar usuário</a>.
+		</p>
+		<p class="erro" th:if="${#lists.isEmpty(exemplares)}">
+			Nenhum exemplar disponível. <a th:href="@{/exemplar}">Ver exemplares</a>.
+		</p>
+		<form th:object="${requisicaoNovoEmprestimo}" th:action="@{/emprestimo/novo}" method="post">
+			<div class="erro" role="alert" th:if="${#fields.hasGlobalErrors()}">
+				<p th:each="erro : ${#fields.globalErrors()}" th:text="${erro}"></p>
+			</div>
+			<div class="campo">
+				<label for="usuarioId">Usuário</label>
+				<select id="usuarioId" th:field="*{usuarioId}" required th:errorclass="invalido" aria-describedby="usuario-erro">
+					<option value="">Selecione um usuário</option>
+					<option th:each="usuario : ${usuarios}" th:value="${usuario.id}" th:text="${usuario.nome} + ' — ' + ${usuario.email}"></option>
+				</select>
+				<small id="usuario-erro" class="erro-campo" th:if="${#fields.hasErrors('usuarioId')}" th:errors="*{usuarioId}"></small>
+			</div>
+			<div class="campo">
+				<label for="exemplarId">Exemplar</label>
+				<select id="exemplarId" th:field="*{exemplarId}" required th:errorclass="invalido" aria-describedby="exemplar-erro">
+					<option value="">Selecione um exemplar</option>
+					<option th:each="exemplar : ${exemplares}" th:value="${exemplar.id}" th:text="${exemplar.codigoTombo} + ' — ' + ${exemplar.livro.titulo}"></option>
+				</select>
+				<small id="exemplar-erro" class="erro-campo" th:if="${#fields.hasErrors('exemplarId')}" th:errors="*{exemplarId}"></small>
+			</div>
+			<div class="acoes">
+				<button type="submit" th:disabled="${#lists.isEmpty(usuarios) or #lists.isEmpty(exemplares)}">Salvar</button>
+				<a th:href="@{/emprestimo}">Cancelar</a>
+			</div>
+		</form>
+	</main>
+</body>
+</html>

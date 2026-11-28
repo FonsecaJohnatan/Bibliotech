@@ -10,9 +10,19 @@
 	<header th:fragment="header">
 		<nav aria-label="Menu principal">
 			<a class="marca" th:href="@{/home}">BiblioTech</a>
-			<a th:href="@{/autor}">Autores</a>
-			<a th:href="@{/categoria}">Categorias</a>
+			<a th:href="@{/livro}">Livros</a>
+			<a th:if="${autenticado}" th:href="@{/meus-emprestimos}">Meus empréstimos</a>
+			<a th:if="${podeGerenciar}" th:href="@{/autor}">Autores</a>
+			<a th:if="${podeGerenciar}" th:href="@{/categoria}">Categorias</a>
+			<a th:if="${podeGerenciar}" th:href="@{/exemplar}">Exemplares</a>
+			<a th:if="${podeGerenciar}" th:href="@{/usuario}">Usuários</a>
+			<a th:if="${podeGerenciar}" th:href="@{/emprestimo}">Empréstimos</a>
+			<a th:unless="${autenticado}" th:href="@{/login}">Entrar</a>
+			<form class="sair" th:if="${autenticado}" th:action="@{/sair}" method="post">
+				<button type="submit">Sair</button>
+			</form>
 		</nav>
 	</header>
+	<h1 th:fragment="titulo(valor)" th:text="${valor}">Título</h1>
 </body>
 </html>

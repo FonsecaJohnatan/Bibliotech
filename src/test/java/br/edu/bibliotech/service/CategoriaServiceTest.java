@@ -1,5 +1,7 @@
 package br.edu.bibliotech.service;
 
+import jakarta.persistence.EntityNotFoundException;
+
 import br.edu.bibliotech.model.Categoria;
 import br.edu.bibliotech.model.Livro;
 import br.edu.bibliotech.repository.CategoriaRepository;
@@ -16,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -58,8 +60,9 @@ class CategoriaServiceTest {
     @NullAndEmptySource
     @ValueSource(strings = {" ", "   "})
     void naoDeveCadastrarNomeVazio(String nome) {
-        assertThatThrownBy(() -> categoriaService.cadastrar(new Categoria(nome, null)))
-                .isInstanceOf(IllegalArgumentException.class);
+        Throwable erro = catchThrowable(() -> categoriaService.cadastrar(new Categoria(nome, null)));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(categoriaRepository, never()).save(any(Categoria.class));
     }
@@ -68,8 +71,9 @@ class CategoriaServiceTest {
     void naoDeveCadastrarNomeAcimaDoLimite() {
         Categoria nova = new Categoria("A".repeat(81), null);
 
-        assertThatThrownBy(() -> categoriaService.cadastrar(nova))
-                .isInstanceOf(IllegalArgumentException.class);
+        Throwable erro = catchThrowable(() -> categoriaService.cadastrar(nova));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(categoriaRepository, never()).save(any(Categoria.class));
     }
@@ -78,8 +82,9 @@ class CategoriaServiceTest {
     void naoDeveCadastrarDescricaoAcimaDoLimite() {
         Categoria nova = new Categoria("Romance", "D".repeat(256));
 
-        assertThatThrownBy(() -> categoriaService.cadastrar(nova))
-                .isInstanceOf(IllegalArgumentException.class);
+        Throwable erro = catchThrowable(() -> categoriaService.cadastrar(nova));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(categoriaRepository, never()).save(any(Categoria.class));
     }
@@ -88,8 +93,9 @@ class CategoriaServiceTest {
     void naoDeveCadastrarNomeDuplicadoIgnorandoMaiusculas() {
         when(categoriaRepository.existsByNomeIgnoreCase("ROMANCE")).thenReturn(true);
 
-        assertThatThrownBy(() -> categoriaService.cadastrar(new Categoria("ROMANCE", null)))
-                .isInstanceOf(IllegalArgumentException.class);
+        Throwable erro = catchThrowable(() -> categoriaService.cadastrar(new Categoria("ROMANCE", null)));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(categoriaRepository, never()).save(any(Categoria.class));
     }
@@ -100,15 +106,18 @@ class CategoriaServiceTest {
         existente.setId(10L);
         when(categoriaRepository.findById(10L)).thenReturn(Optional.of(existente));
 
-        assertThat(categoriaService.buscarPorId(10L)).isSameAs(existente);
+        var resultado = categoriaService.buscarPorId(10L);
+
+        assertThat(resultado).isSameAs(existente);
     }
 
     @Test
     void naoDeveBuscarCategoriaInexistente() {
         when(categoriaRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> categoriaService.buscarPorId(999L))
-                .isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> categoriaService.buscarPorId(999L));
+
+        assertThat(erro).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -119,7 +128,9 @@ class CategoriaServiceTest {
         ciencia.setId(20L);
         when(categoriaRepository.findAll()).thenReturn(List.of(romance, ciencia));
 
-        assertThat(categoriaService.listar()).containsExactly(romance, ciencia);
+        var resultado = categoriaService.listar();
+
+        assertThat(resultado).containsExactly(romance, ciencia);
     }
 
     @Test
@@ -163,9 +174,10 @@ class CategoriaServiceTest {
         when(categoriaRepository.findById(10L)).thenReturn(Optional.of(existente));
         when(categoriaRepository.existsByNomeIgnoreCase("Fantasia")).thenReturn(true);
 
-        assertThatThrownBy(() -> categoriaService.atualizar(10L,
-                new Categoria("Fantasia", "Nova descrição")))
-                .isInstanceOf(IllegalArgumentException.class);
+        Throwable erro = catchThrowable(() -> categoriaService.atualizar(10L,
+                new Categoria("Fantasia", "Nova descrição")));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(categoriaRepository, never()).save(any(Categoria.class));
         assertThat(existente.getNome()).isEqualTo("Romance");
@@ -178,8 +190,9 @@ class CategoriaServiceTest {
         existente.setId(10L);
         when(categoriaRepository.findById(10L)).thenReturn(Optional.of(existente));
 
-        assertThatThrownBy(() -> categoriaService.atualizar(10L, new Categoria("  ", null)))
-                .isInstanceOf(IllegalArgumentException.class);
+        Throwable erro = catchThrowable(() -> categoriaService.atualizar(10L, new Categoria("  ", null)));
+
+        assertThat(erro).isInstanceOf(IllegalArgumentException.class);
 
         verify(categoriaRepository, never()).save(any(Categoria.class));
         assertThat(existente.getNome()).isEqualTo("Romance");
@@ -189,8 +202,10 @@ class CategoriaServiceTest {
     void naoDeveAtualizarCategoriaInexistente() {
         when(categoriaRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> categoriaService.atualizar(999L,
-                new Categoria("Romance", null))).isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> categoriaService.atualizar(999L,
+                new Categoria("Romance", null)));
+
+        assertThat(erro).isInstanceOf(EntityNotFoundException.class);
 
         verify(categoriaRepository, never()).save(any(Categoria.class));
     }
@@ -210,9 +225,11 @@ class CategoriaServiceTest {
     void naoDeveExcluirCategoriaInexistente() {
         when(categoriaRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> categoriaService.excluir(999L))
-                .isInstanceOf(RuntimeException.class);
+        Throwable erro = catchThrowable(() -> categoriaService.excluir(999L));
+
+        assertThat(erro).isInstanceOf(EntityNotFoundException.class);
 
         verify(categoriaRepository, never()).delete(any(Categoria.class));
     }
+
 }

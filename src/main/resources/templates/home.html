@@ -6,21 +6,40 @@
 	<main>
 		<p class="legenda">Biblioteca comunitária</p>
 		<h1>Bem-vindo ao BiblioTech</h1>
-		<p>Organize os autores e as categorias do acervo.</p>
+		<p>Consulte os livros e acompanhe os empréstimos da biblioteca.</p>
 		<div class="cards">
+			<section class="card" th:if="${podeGerenciar}">
+				<h2>Empréstimos</h2>
+				<p>Registre empréstimos, renovações e devoluções.</p>
+				<a class="botao" th:href="@{/emprestimo}">Ver empréstimos</a>
+			</section>
+			<section class="card" th:if="${podeGerenciar}">
+				<h2>Exemplares</h2>
+				<p>Consulte os exemplares e sua disponibilidade.</p>
+				<a class="botao" th:href="@{/exemplar}">Ver exemplares</a>
+			</section>
+			<section class="card" th:if="${podeGerenciar}">
+				<h2>Usuários</h2>
+				<p>Consulte e cadastre os usuários da biblioteca.</p>
+				<a class="botao" th:href="@{/usuario}">Ver usuários</a>
+			</section>
 			<section class="card">
+				<h2>Livros</h2>
+				<p>Consulte os livros do acervo e sua disponibilidade.</p>
+				<a class="botao" th:href="@{/livro}">Ver livros</a>
+			</section>
+			<section class="card" th:if="${podeGerenciar}">
 				<h2>Autores</h2>
 				<p>Consulte e cadastre os autores dos livros.</p>
 				<a class="botao" th:href="@{/autor}">Ver autores</a>
 			</section>
-			<section class="card">
+			<section class="card" th:if="${podeGerenciar}">
 				<h2>Categorias</h2>
 				<p>Organize os livros por assunto ou gênero.</p>
 				<a class="botao" th:href="@{/categoria}">Ver categorias</a>
 			</section>
 		</div>
 	</main>
-	<section th:replace="~{autor/lista :: lista}"></section>
-	<section th:replace="~{categoria/lista :: lista}"></section>
+	<section th:replace="~{livro/lista :: lista}"></section>
 </body>
 </html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{base :: head('Exemplares')}"></head>
+<body>
+	<header th:replace="~{base :: header}"></header>
+	<main th:fragment="lista">
+		<div class="titulo">
+			<h1>Exemplares</h1>
+			<a class="botao" th:href="@{/exemplar/formulario}">Novo exemplar</a>
+		</div>
+		<p class="erro" role="alert" th:if="${erro != null}" th:text="${erro}"></p>
+		<form th:action="@{/exemplar}" method="get">
+			<div class="campo">
+				<label for="filtroLivro">Livro</label>
+				<select id="filtroLivro" name="livroId">
+					<option value="">Todos os livros</option>
+					<option th:each="livro : ${livros}" th:value="${livro.id}" th:text="${livro.titulo} + ' — ' + ${livro.isbn}" th:selected="${livro.id == livroId}"></option>
+				</select>
+			</div>
+			<button type="submit">Filtrar</button>
+		</form>
+		<p class="card" th:if="${#lists.isEmpty(exemplares)}">Nenhum exemplar encontrado.</p>
+		<div class="tabela" th:unless="${#lists.isEmpty(exemplares)}">
+			<table>
+				<caption class="sr-only">Lista de exemplares</caption>
+				<thead>
+					<tr>
+						<th scope="col">Código de tombo</th>
+						<th scope="col">Livro</th>
+						<th scope="col">Status</th>
+						<th scope="col">Ações</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="exemplar : ${exemplares}">
+						<td th:text="${exemplar.codigoTombo}"></td>
+						<td th:text="${exemplar.livro.titulo}"></td>
+						<td th:text="${#messages.msg('statusExemplar.' + exemplar.status)}"></td>
+						<td>
+							<div class="acoes">
+								<a th:href="@{/exemplar/{id}/editar(id=${exemplar.id})}" th:aria-label="'Editar ' + ${exemplar.codigoTombo}">Editar</a>
+								<form class="acao-tabela" th:action="@{/exemplar/{id}/excluir(id=${exemplar.id})}" method="post">
+									<button type="submit" th:aria-label="'Excluir ' + ${exemplar.codigoTombo}">Excluir</button>
+								</form>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</main>
+</body>
+</html>

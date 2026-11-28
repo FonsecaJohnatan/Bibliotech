@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{base :: head('Meus empréstimos')}"></head>
+<body>
+    <header th:replace="~{base :: header}"></header>
+    <main>
+        <h1 th:replace="~{base :: titulo('Meus empréstimos')}">Meus empréstimos</h1>
+        <p class="card" th:if="${#lists.isEmpty(emprestimos)}">Você ainda não possui empréstimos.</p>
+        <div class="tabela" th:unless="${#lists.isEmpty(emprestimos)}">
+            <table>
+                <caption class="sr-only">Histórico dos meus empréstimos</caption>
+                <thead>
+                    <tr><th scope="col">Livro</th><th scope="col">Exemplar</th><th scope="col">Prazo</th><th scope="col">Situação</th><th scope="col">Multa</th></tr>
+                </thead>
+                <tbody>
+                    <tr th:each="emprestimo : ${emprestimos}">
+                        <td th:text="${emprestimo.exemplar.livro.titulo}"></td>
+                        <td th:text="${emprestimo.exemplar.codigoTombo}"></td>
+                        <td th:text="${#temporals.format(emprestimo.dataPrevista, 'dd/MM/yyyy')}"></td>
+                        <td th:text="${emprestimo.dataDevolucao == null ? 'Em aberto' : 'Devolvido'}"></td>
+                        <td th:text="${emprestimo.dataDevolucao == null ? '—' : 'R$ ' + #numbers.formatDecimal(emprestimo.multa, 1, 'POINT', 2, 'COMMA')}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+</html>

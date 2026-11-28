@@ -39,7 +39,7 @@ public class CategoriaController {
 		}
 
 		try {
-			Categoria categoria = requisicao.toCategoria();
+			Categoria categoria = requisicao.toEntidade();
 			this.categoriaService.cadastrar(categoria);
 		} catch (IllegalArgumentException exception) {
 			result.reject("cadastro", exception.getMessage());
@@ -72,7 +72,7 @@ public class CategoriaController {
 		}
 
 		try {
-			Categoria categoria = requisicao.toCategoria();
+			Categoria categoria = requisicao.toEntidade();
 			this.categoriaService.atualizar(id, categoria);
 		} catch (IllegalArgumentException exception) {
 			result.reject("atualizacao", exception.getMessage());

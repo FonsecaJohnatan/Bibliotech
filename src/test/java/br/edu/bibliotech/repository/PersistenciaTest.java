@@ -115,7 +115,6 @@ class PersistenciaTest {
         List<Emprestimo> atrasados = emprestimoRepository.findByDataDevolucaoIsNullAndDataPrevistaBefore(hoje);
 
         assertThat(atrasados).hasSize(1);
-        // previsto para 15/09; 24/10 = 39 dias de atraso -> R$ 39,00
         assertThat(atrasados.get(0).calcularMulta(hoje)).isEqualByComparingTo(new BigDecimal("39.00"));
     }
 
